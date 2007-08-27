@@ -7,7 +7,6 @@
     <relativePath>../build/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>jboss</groupId>
   <artifactId>jnpserver</artifactId>
   <version>5.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>

@@ -71,6 +71,21 @@
         <artifactId>jboss-deploy-maven-plugin</artifactId>
         <version>1.3-SNAPSHOT</version>
       </plugin>
+      <plugin>
+        <groupId>org.jboss.maven.plugins</groupId>
+        <artifactId>maven-jboss-deploy-plugin</artifactId>
+        <version>1.3</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jboss-deploy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <jbossDeployRoot>${jboss.repository.root}</jbossDeployRoot>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <repositories>
@@ -85,8 +100,8 @@
     </repository>
   </repositories>
   <modules>
-    <module>../jnp-client</module>
     <module>../jnpserver</module>
+    <module>../jnp-client</module>
   </modules>
   <reporting>
     <plugins>
