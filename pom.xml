@@ -12,7 +12,7 @@
   <url>http://www.jboss.org</url>
   <description>The JBoss JNDI Server</description>
   <scm>
-     <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk/jnpserver</connection>
+     <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
   </scm>
    <build>
       <plugins>
