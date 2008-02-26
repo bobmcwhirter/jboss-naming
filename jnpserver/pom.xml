@@ -14,6 +14,18 @@
   <scm>
      <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk/jnpserver</connection>
   </scm>
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <configuration>
+               <descriptors>
+                  <descriptor>src/main/assembly/client.xml</descriptor>
+               </descriptors>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
   <dependencies>
     <dependency>
          <groupId>apache-log4j</groupId>

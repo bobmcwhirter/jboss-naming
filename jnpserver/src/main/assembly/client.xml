@@ -1,0 +1,17 @@
+<assembly>
+    <id>client</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <fileSets>
+        <fileSet>
+            <directory>target/classes</directory>
+            <includes>
+                <include>org/jnp/interfaces/**</include>
+                <include>org/jboss/naming/**</include>
+            </includes>
+            <outputDirectory></outputDirectory>
+        </fileSet>
+    </fileSets>
+</assembly>
