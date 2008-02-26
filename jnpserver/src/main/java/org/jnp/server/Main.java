@@ -351,7 +351,8 @@ public class Main implements MainMBean
          +",rmiPort="+rmiPort
          +",clientSocketFactory="+clientSocketFactory
          +",serverSocketFactory="+serverSocketFactory);
-      Remote stub = UnicastRemoteObject.exportObject(getNamingInstance(),
+      Naming instance = getNamingInstance();
+      Remote stub = UnicastRemoteObject.exportObject(instance,
             rmiPort, clientSocketFactory, serverSocketFactory);
       log.debug("NamingServer stub: "+stub);
       serverStub = new MarshalledObject(stub);      

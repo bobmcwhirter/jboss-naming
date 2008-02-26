@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="naming/target-eclipse-test-classes" path="test/java"/>
 	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="src" output="target/eclipse-test-classes" path="src/test/resources"/>
+	<classpathentry kind="src" output="target/eclipse-test-classes" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="M2_REPO/apache-log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry kind="var" path="M2_REPO/junit/junit/4.4/junit-4.4.jar"/>

@@ -34,15 +34,20 @@ import junit.framework.TestSuite;
 import junit.framework.TestCase;
 
 import org.jnp.server.Main;
+import org.jnp.server.NamingBean;
+import org.jnp.server.NamingBeanImpl;
 
 /** A test of RMI custom sockets with the jnp JNDI provider.
 
- @author Scott_Stark@displayscape.com
- @version $Revision$
+ @author Scott.Stark@jboss.org
+ @version $Revision:70105 $
  */
 public class TestJNPSockets extends TestCase
 {
-   static Main server;
+   /** The actual namingMain service impl bean */
+   private static NamingBeanImpl namingBean;
+   /** */
+   private static Main namingMain = new Main();
 
    static int serverPort;
 
@@ -53,16 +58,18 @@ public class TestJNPSockets extends TestCase
 
    protected void setUp() throws Exception
    {
-      if (server != null)
+      if (namingBean != null)
          return;
 
-      server = new Main();
-      server.setPort(0);
-      server.setBindAddress("localhost");
-      server.setClientSocketFactory(ClientSocketFactory.class.getName());
-      server.setServerSocketFactory(ServerSocketFactory.class.getName());
-      server.start();
-      serverPort = server.getPort();
+      namingBean = new NamingBeanImpl();
+      namingBean.start();
+      namingMain.setPort(0);
+      namingMain.setBindAddress("localhost");
+      namingMain.setClientSocketFactory(ClientSocketFactory.class.getName());
+      namingMain.setServerSocketFactory(ServerSocketFactory.class.getName());
+      namingMain.setNamingInfo(namingBean);
+      namingMain.start();
+      serverPort = namingMain.getPort();
    }
 
    public void testAccess() throws Exception
@@ -79,7 +86,7 @@ public class TestJNPSockets extends TestCase
          fail("No ClientSocketFactory was created");
       if (ServerSocketFactory.created == false)
          fail("No ServerSocketFactory was created");
-      server.stop();
+      namingMain.stop();
    }
 
    public static void main(String[] args) throws Exception
