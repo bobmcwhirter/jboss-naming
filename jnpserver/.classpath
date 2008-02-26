@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="naming/target-eclipse-test-classes" path="test/java"/>
+	<classpathentry kind="src" path="src/main/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="M2_REPO/apache-log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
+	<classpathentry kind="var" path="M2_REPO/junit/junit/4.4/junit-4.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/jboss-common-core/2.2.3.GA/jboss-common-core-2.2.3.GA.jar"/>
+	<classpathentry kind="var" path="M2_REPO/jboss/jboss-common-logging-spi/2.0.4.GA/jboss-common-logging-spi-2.0.4.GA.jar"/>
+	<classpathentry kind="var" path="M2_REPO/jboss/jboss-common-logging-log4j/2.0.4.GA/jboss-common-logging-log4j-2.0.4.GA.jar"/>
+	<classpathentry kind="output" path="target/eclipse-classes"/>
+</classpath>
