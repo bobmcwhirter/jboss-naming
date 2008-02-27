@@ -41,6 +41,11 @@
   </build>
   <dependencies>
     <dependency>
+      <groupId>org.jboss</groupId>
+      <artifactId>jnpserver</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>jboss</groupId>
       <artifactId>jboss-common-core</artifactId>
       <version>2.0.2.GA</version>
