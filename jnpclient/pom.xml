@@ -1,4 +1,4 @@
-<?xml version="1.0"?><project>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
     <groupId>org.jboss</groupId>
     <artifactId>jboss-parent</artifactId>
@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>jnp-client</artifactId>
   <name>JBoss Naming Client</name>
-  <version>5.0.0-SNAPSHOT</version>
+  <version>5.0.0.Beta4</version>
   <description>The JBoss Naming Client</description>
   <url>http://www.jboss.org</url>
   <build>
@@ -26,10 +26,10 @@
               <tasks>
                 <jar jarfile="${basedir}/target/jnp-client-${project.version}.jar" update="true" manifest="${basedir}/../jnpserver/src/etc/default.mf">
                   <fileset dir="${basedir}/../jnpserver/target/classes">
-                    <include name="org/jnp/interfaces/**"></include>
-                    <include name="org/jboss/naming/**"></include>
+                    <include name="org/jnp/interfaces/**" />
+                    <include name="org/jboss/naming/**" />
                   </fileset>
-                  <fileset file="${basedir}/JBossORG-EULA.txt"></fileset>
+                  <fileset file="${basedir}/JBossORG-EULA.txt" />
                 </jar>
               </tasks>
             </configuration>
@@ -57,4 +57,3 @@
     </dependency>
   </dependencies>
 </project>
-
