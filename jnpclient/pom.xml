@@ -5,6 +5,7 @@
     <version>3</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <groupId>org.jboss.naming</groupId>
   <artifactId>jnp-client</artifactId>
   <name>JBoss Naming Client</name>
   <version>5.0.0-SNAPSHOT</version>
@@ -29,7 +30,7 @@
                     <include name="org/jnp/interfaces/**" />
                     <include name="org/jboss/naming/**" />
                   </fileset>
-                  <fileset file="${basedir}/JBossORG-EULA.txt" />
+                  <fileset file="${basedir}/../JBossORG-EULA.txt" />
                 </jar>
               </tasks>
             </configuration>
@@ -39,21 +40,27 @@
       </plugin>
     </plugins>
   </build>
+  
   <dependencies>
     <dependency>
       <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
+      <version>2.2.5.GA</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging-spi</artifactId>
+      <version>2.0.5.GA</version>
+    </dependency>
+    <!--
+    The jnp-client module depends on the jnpserver module at build time
+    in order to copy the classes, but not at runtime.
+    <dependency>
+      <groupId>org.jboss.naming</groupId>
       <artifactId>jnpserver</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common-core</artifactId>
-      <version>2.0.2.GA</version>
-    </dependency>
-    <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-logging-spi</artifactId>
-      <version>2.0.2.GA</version>
-    </dependency>
+    -->
   </dependencies>
 </project>
