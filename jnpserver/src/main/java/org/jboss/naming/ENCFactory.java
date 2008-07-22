@@ -21,20 +21,19 @@
 */
 package org.jboss.naming;
 
-import java.util.Hashtable;
-import java.util.WeakHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.security.PrivilegedAction;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.NamingException;
 import javax.naming.spi.ObjectFactory;
 
-import org.jnp.server.NamingServer;
 import org.jnp.interfaces.NamingContext;
+import org.jnp.server.NamingServer;
 
 /**
  *   Implementation of "java:comp" namespace factory. The context is associated
@@ -82,6 +81,7 @@ public class ENCFactory
    }
 
    // Static --------------------------------------------------------
+   
    public static void setTopClassLoader(ClassLoader topLoader)
    {
       ENCFactory.topLoader = topLoader;
@@ -90,12 +90,6 @@ public class ENCFactory
    {
       return ENCFactory.topLoader;
    }
-
-
-
-
-   // Constructors --------------------------------------------------
-
 
    // Public --------------------------------------------------------
 
@@ -144,13 +138,22 @@ public class ENCFactory
       }
    }
 
+   /**
+    * Util method for possible override.
+    *
+    * @return new naming server instance
+    * @throws NamingException for any error
+    */
+   protected NamingServer createServer() throws NamingException
+   {
+      return new NamingServer();
+   }
+
    protected Context createContext(Hashtable environment)
            throws NamingException
    {
-      Context compCtx;
-      NamingServer srv = new NamingServer();
-      compCtx = new NamingContext(environment, null, srv);
-      return compCtx;
+      NamingServer srv = createServer();
+      return new NamingContext(environment, null, srv);
    }
 
    private static class GetTCLAction implements PrivilegedAction
@@ -158,13 +161,11 @@ public class ENCFactory
       static PrivilegedAction ACTION = new GetTCLAction();
       public Object run()
       {
-         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-         return loader;
+         return Thread.currentThread().getContextClassLoader();
       }
       static ClassLoader getContextClassLoader()
       {
-         ClassLoader loader = (ClassLoader) AccessController.doPrivileged(ACTION);
-         return loader;
+         return (ClassLoader) AccessController.doPrivileged(ACTION);
       }
    }
 
@@ -187,8 +188,7 @@ public class ENCFactory
       }
       ClassLoader getParent()
       {
-         ClassLoader parent = (ClassLoader) AccessController.doPrivileged(this);
-         return parent;
+         return (ClassLoader) AccessController.doPrivileged(this);
       }
    }
 }

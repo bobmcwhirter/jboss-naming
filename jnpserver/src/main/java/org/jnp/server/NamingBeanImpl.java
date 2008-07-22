@@ -89,6 +89,17 @@ public class NamingBeanImpl
       this.UseGlobalService = flag;
    }
 
+   /**
+    * Util method for possible override.
+    *
+    * @return new naming instance
+    * @throws Exception for any error
+    */
+   protected Naming createServer() throws Exception
+   {
+      return new NamingServer();
+   }
+   
    public void start()
       throws Exception
    {
@@ -100,7 +111,7 @@ public class NamingBeanImpl
             theServer = NamingContext.localServer;
          // If not, or there is no server create one
          if( theServer == null )
-            theServer = new NamingServer();
+            theServer = createServer();
          else
          {
             // We need to wrap the server to allow exporting it
@@ -149,11 +160,9 @@ public class NamingBeanImpl
       ctx.rebind("comp", envRef);
       ctx.close();
       iniCtx.close();
-
    }
 
    public void stop()
    {
    }
-
 }

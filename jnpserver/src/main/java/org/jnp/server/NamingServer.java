@@ -22,10 +22,10 @@
 package org.jnp.server;
 
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
 import javax.naming.Context;
@@ -39,10 +39,10 @@ import javax.naming.NotContextException;
 import javax.naming.Reference;
 import javax.naming.spi.ResolveResult;
 
+import org.jboss.logging.Logger;
 import org.jnp.interfaces.Naming;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.interfaces.NamingParser;
-import org.jboss.logging.Logger;
 
 /**
  * The JNDI naming server implementation class.
@@ -63,7 +63,7 @@ public class NamingServer
 
    // Attributes ----------------------------------------------------
    
-   protected Hashtable table = new Hashtable();
+   protected Map table = createTable();
    protected Name prefix;
    protected NamingParser parser = new NamingParser();
    protected NamingServer parent;
@@ -71,6 +71,7 @@ public class NamingServer
    // Static --------------------------------------------------------
 
    // Constructors --------------------------------------------------
+
    public NamingServer()
       throws NamingException
    {
@@ -80,12 +81,32 @@ public class NamingServer
    public NamingServer(Name prefix, NamingServer parent)
       throws NamingException
    {
-      if (prefix == null) prefix = parser.parse("");
-      this.prefix = prefix;
-      
+      if (prefix == null)
+         prefix = parser.parse("");
+      this.prefix = prefix;      
       this.parent = parent;
    }
-   
+
+   // Protected -----------------------------------------------------
+
+   protected Map createTable()
+   {
+      return new ConcurrentHashMap();  
+   }
+
+   /**
+    * Create sub naming.
+    *
+    * @param prefix the prefix
+    * @param parent the parent naming server
+    * @return new sub instance
+    * @throws NamingException for any error
+    */
+   protected NamingServer createNamingServer(Name prefix, NamingServer parent) throws NamingException
+   {
+      return new NamingServer(prefix, parent);
+   }
+
    // Public --------------------------------------------------------
 
    // Naming implementation -----------------------------------------
@@ -318,12 +339,13 @@ public class NamingServer
 //         System.out.println("list "+name);
          
          Vector list = new Vector();
-         Enumeration keys = table.keys();
-         while (keys.hasMoreElements())
+         Iterator iter = table.entrySet().iterator();
+         while(iter.hasNext())
          {
-            String key = (String)keys.nextElement();
-            Binding b = getBinding(key);
-            
+            Map.Entry entry = (Map.Entry)iter.next();
+            String key = (String)entry.getKey();
+            Binding b = (Binding)entry.getValue();
+
             list.addElement(new NameClassPair(b.getName(),b.getClassName(),true));
          }
          return list;
@@ -471,7 +493,7 @@ public class NamingServer
          {
             Name fullName = (Name) prefix.clone();
             fullName.addAll(name);
-            NamingServer subContext = new NamingServer(fullName, this);
+            NamingServer subContext = createNamingServer(fullName, this);
             setBinding(name, subContext, NamingContext.class.getName());
             subCtx = new NamingContext(null, fullName, getRoot());
          }
