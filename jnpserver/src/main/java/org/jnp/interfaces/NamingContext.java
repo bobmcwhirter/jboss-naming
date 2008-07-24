@@ -1154,8 +1154,12 @@ public class NamingContext
    public Object lookupLink(Name name)
       throws NamingException
    {
-      // FIXME JBAS-4616
-      
+      Hashtable refEnv = getEnv(name);
+      checkRef(refEnv);
+      Name parsedName = (Name) refEnv.get(JNP_PARSED_NAME);
+      if (parsedName != null)
+         name = parsedName;
+
       if (name.isEmpty())
          return lookup(name);
 
@@ -1170,8 +1174,7 @@ public class NamingContext
          catch (RemoteException re)
          {
             // Check for JBAS-4574.
-            // TODO if we resolve JBAS-4616, need to use refEnv
-            if (handleStaleNamingStub(re, env))
+            if (handleStaleNamingStub(re, refEnv))
             {
                // try again with new naming stub                  
                link = naming.lookup(n);
@@ -1189,7 +1192,7 @@ public class NamingContext
       catch (IOException e)
       {
          naming = null;
-         removeServer(env);
+         removeServer(refEnv);
          NamingException ex = new CommunicationException();
          ex.setRootCause(e);
          throw ex;
