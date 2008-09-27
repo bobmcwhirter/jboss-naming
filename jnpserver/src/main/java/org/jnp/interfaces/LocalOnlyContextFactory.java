@@ -30,7 +30,8 @@ import javax.naming.spi.InitialContextFactory;
 import javax.naming.spi.ObjectFactory;
 
 /**
- * Only use locally available naming server
+ * An InitialContextFactory that uses the NamingContex.localServer naming server
+ * which has to have been set.
  *
  * @author <a href="mailto:bill@jboss.org">Bill Burke</a>
  * @version $Revision$
@@ -42,7 +43,8 @@ public class LocalOnlyContextFactory
          public Context getInitialContext(Hashtable env)
            throws NamingException
          {
-             if (NamingContext.localServer == null) throw new NamingException("Local server is not initialized");
+             if (NamingContext.localServer == null)
+                throw new NamingException("Local server is not initialized");
              return new NamingContext(env, null, NamingContext.localServer);
          }
 
