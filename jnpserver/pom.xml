@@ -1,9 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <!-- Parent -->
   <parent>
-     <groupId>org.jboss</groupId>
-     <artifactId>jboss-parent</artifactId>
-     <version>3</version>
+    <groupId>org.jboss</groupId>
+    <artifactId>jboss-parent</artifactId>
+    <version>4-beta-2</version>
   </parent>
+  
   <version>5.0.0-SNAPSHOT</version>   
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.jboss.naming</groupId>
@@ -15,6 +17,12 @@
   <scm>
      <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
   </scm>
+  <!-- Properties -->
+  <properties>
+    <version.org.jboss.common.core>2.2.8.GA</version.org.jboss.common.core>
+    <version.org.jboss.microcontainer>2.2.0-SNAPSHOT</version.org.jboss.microcontainer>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -32,9 +40,9 @@
     <dependency>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-common-core</artifactId>
-      <version>2.2.7.GA</version>
+      <version>${version.org.jboss.common.core}</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging-spi</artifactId>
@@ -47,5 +55,17 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.microcontainer</groupId>
+      <artifactId>jboss-kernel</artifactId>
+      <version>${version.org.jboss.microcontainer}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.test</groupId>
+      <artifactId>jboss-test</artifactId>
+      <version>1.1.1.GA</version>
+    </dependency>
+    
   </dependencies>
 </project>
