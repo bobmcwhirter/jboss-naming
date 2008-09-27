@@ -25,7 +25,9 @@ import javax.naming.NamingException;
 import org.jnp.interfaces.NamingContext;
 
 /**
- * Comment
+ * An extension of the NamingServer that installs itself as the
+ * {@link NamingContext#setLocal(org.jnp.interfaces.Naming)} instancee used
+ * as the JVM local server.
  *
  * @author <a href="mailto:bill@jboss.org">Bill Burke</a>
  * @version $Revision$
