@@ -53,6 +53,7 @@ public class NamingBeanImpl
    protected boolean InstallGlobalService = true;
    /** A flag indicating if theServer will try to use the NamingContext.setLocal value */
    protected boolean UseGlobalService = true;
+   private EventMgr eventMgr;
 
    // Static --------------------------------------------------------
    public static void main(String[] args)
@@ -89,6 +90,15 @@ public class NamingBeanImpl
       this.UseGlobalService = flag;
    }
 
+   public EventMgr getEventMgr()
+   {
+      return eventMgr;
+   }
+   public void setEventMgr(EventMgr eventMgr)
+   {
+      this.eventMgr = eventMgr;
+   }
+
    /**
     * Util method for possible override.
     *
@@ -97,9 +107,13 @@ public class NamingBeanImpl
     */
    protected Naming createServer() throws Exception
    {
-      return new NamingServer();
+      return new NamingServer(null, null, eventMgr);
    }
-   
+
+   /**
+    * 
+    * @throws Exception
+    */
    public void start()
       throws Exception
    {
@@ -162,7 +176,12 @@ public class NamingBeanImpl
       iniCtx.close();
    }
 
+   /**
+    * Clear the NamingContext local server if its our theSever value
+    */
    public void stop()
    {
+      if(NamingContext.localServer == theServer)
+         NamingContext.setLocal(null);
    }
 }

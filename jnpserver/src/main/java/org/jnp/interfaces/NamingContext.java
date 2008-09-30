@@ -442,6 +442,10 @@ public class NamingContext
       return serverInfo;
    }
 
+   public Naming getLocal()
+   {
+      return localServer;
+   }
    public static void setLocal(Naming server)
    {
       localServer = server;
@@ -1211,29 +1215,41 @@ public class NamingContext
    public void addNamingListener(Name target, int scope, NamingListener l)
       throws NamingException
    {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("This is not supported currently");
+      if((naming instanceof NamingEvents) == false)
+      {
+         throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
+      }
+      NamingEvents next = (NamingEvents) naming;
+      next.addNamingListener(this, target, scope, l);
    }
 
    public void addNamingListener(String target, int scope, NamingListener l)
       throws NamingException
    {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("This is not supported currently");      
+      Name targetName = parser.parse(target);
+      addNamingListener(targetName, scope, l);
    }
 
    public void removeNamingListener(NamingListener l)
       throws NamingException
    {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("This is not supported currently");
+      if((naming instanceof NamingEvents) == false)
+      {
+         throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
+      }
+      NamingEvents next = (NamingEvents) naming;
+      next.removeNamingListener(l);
    }
 
    public boolean targetMustExist()
       throws NamingException
    {
-      // TODO Auto-generated method stub
-      return false;
+      if((naming instanceof NamingEvents) == false)
+      {
+         throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
+      }
+      NamingEvents next = (NamingEvents) naming;
+      return next.targetMustExist();
    }
    // End EventContext methods
 

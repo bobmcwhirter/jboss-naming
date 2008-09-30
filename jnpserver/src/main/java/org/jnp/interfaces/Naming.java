@@ -31,10 +31,10 @@ import javax.naming.Name;
 import javax.naming.NamingException;
 
 /**
- *   <description> 
+ *   The naming server/proxy interface
  *      
  *   @see <related>
- *   @author $Author$
+ *   @author Scott.Stark@jboss.org
  *   @version $Revision$
  */
 public interface Naming

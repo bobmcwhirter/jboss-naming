@@ -21,11 +21,14 @@
   */
 package org.jnp.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
 import javax.naming.Context;
@@ -37,15 +40,19 @@ import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.naming.NotContextException;
 import javax.naming.Reference;
+import javax.naming.event.EventContext;
+import javax.naming.event.NamingEvent;
+import javax.naming.event.NamingListener;
 import javax.naming.spi.ResolveResult;
 
 import org.jboss.logging.Logger;
 import org.jnp.interfaces.Naming;
 import org.jnp.interfaces.NamingContext;
+import org.jnp.interfaces.NamingEvents;
 import org.jnp.interfaces.NamingParser;
 
 /**
- * The JNDI naming server implementation class.
+ * The in memory JNDI naming server implementation class.
  * 
  * @author Rickard Oberg
  * @author patriot1burke
@@ -53,7 +60,7 @@ import org.jnp.interfaces.NamingParser;
  * @version $Revision$
  */
 public class NamingServer
-   implements Naming, java.io.Serializable
+   implements Naming, NamingEvents, java.io.Serializable
 {
    private static Logger log = Logger.getLogger(NamingServer.class);
 
@@ -62,11 +69,16 @@ public class NamingServer
    // Constants -----------------------------------------------------
 
    // Attributes ----------------------------------------------------
-   
-   protected Map table = createTable();
+   /** */
+   protected Map<String, Binding> table = createTable();
    protected Name prefix;
    protected NamingParser parser = new NamingParser();
    protected NamingServer parent;
+   /** The NamingListeners registered with this context */
+   private EventListeners listeners;
+   /** The manager for EventContext listeners */
+   private EventMgr eventMgr;
+   private boolean trace;
 
    // Static --------------------------------------------------------
 
@@ -81,33 +93,50 @@ public class NamingServer
    public NamingServer(Name prefix, NamingServer parent)
       throws NamingException
    {
+      this(null, null, null);   
+   }
+   public NamingServer(Name prefix, NamingServer parent, EventMgr eventMgr)
+      throws NamingException
+   {
       if (prefix == null)
          prefix = parser.parse("");
       this.prefix = prefix;      
       this.parent = parent;
+      this.eventMgr = eventMgr;
+      this.trace = log.isTraceEnabled();
    }
 
-   // Protected -----------------------------------------------------
-
-   protected Map createTable()
-   {
-      return new ConcurrentHashMap();  
-   }
-
-   /**
-    * Create sub naming.
-    *
-    * @param prefix the prefix
-    * @param parent the parent naming server
-    * @return new sub instance
-    * @throws NamingException for any error
-    */
-   protected NamingServer createNamingServer(Name prefix, NamingServer parent) throws NamingException
-   {
-      return new NamingServer(prefix, parent);
-   }
 
    // Public --------------------------------------------------------
+
+   // NamingListener registration
+   public synchronized void addNamingListener(EventContext context, Name target, int scope, NamingListener l) 
+      throws NamingException
+   {
+      if(listeners == null)
+         listeners = new EventListeners(context);
+      if(trace)
+         log.trace("addNamingListener, target: "+target+", scope: "+scope);
+      listeners.addNamingListener(context, target, scope, l);
+   }
+
+   public void removeNamingListener(NamingListener l) throws NamingException
+   {
+      if(listeners != null)
+      {
+         listeners.removeNamingListener(l);
+      }
+   }
+
+    /**
+     * We don't need targets to exist?
+     * @return false
+     * @throws NamingException
+     */
+    public boolean targetMustExist() throws NamingException
+    {
+       return false;
+    }
 
    // Naming implementation -----------------------------------------
    public synchronized void bind(Name name, Object obj, String className)
@@ -116,8 +145,9 @@ public class NamingServer
       if (name.isEmpty())
       {
          // Empty names are not allowed
-         throw new InvalidNameException();
-      } else if (name.size() > 1) 
+         throw new InvalidNameException("An empty name cannot be passed to bind");
+      }
+      else if (name.size() > 1) 
       {
          // Recurse to find correct context
 //         System.out.println("bind#"+name+"#");
@@ -127,8 +157,10 @@ public class NamingServer
          {
             if (ctx instanceof NamingServer)
             {
-               ((NamingServer)ctx).bind(name.getSuffix(1),obj, className);
-            } else if (ctx instanceof Reference)
+               NamingServer ns = (NamingServer) ctx;
+               ns.bind(name.getSuffix(1),obj, className);
+            }
+            else if (ctx instanceof Reference)
             {
                // Federation
                if (((Reference)ctx).get("nns") != null)
@@ -137,35 +169,47 @@ public class NamingServer
                   cpe.setResolvedObj(ctx);
                   cpe.setRemainingName(name.getSuffix(1));
                   throw cpe;
-               } else
+               }
+               else
                {
                   throw new NotContextException();
                }
-            } else
+            }
+            else
             {
                throw new NotContextException();
             }
-         } else
-         {
-            throw new NameNotFoundException();
          }
-      } else
+         else
+         {
+            throw new NameNotFoundException(name.toString()+" in: "+prefix);
+         }
+      }
+      else
       {
          // Bind object
          if (name.get(0).equals(""))
          {
-            throw new InvalidNameException();
-         } else
+            throw new InvalidNameException("An empty name cannot be passed to bind");
+         }
+         else
          {
-//            System.out.println("bind "+name+"="+obj);
+            if(trace)
+               log.trace("bind "+name+"="+obj+", "+className);
             try
             {
                getBinding(name);
                // Already bound
-               throw new NameAlreadyBoundException();
-            } catch (NameNotFoundException e)
+               throw new NameAlreadyBoundException(name.toString());
+            }
+            catch (NameNotFoundException e)
             {
-               setBinding(name,obj,className);
+               Binding newb = setBinding(name,obj,className);
+               // Notify event listeners
+               Binding oldb = null;
+               Name fullName = (Name) prefix.clone();
+               fullName.addAll(name);
+               this.fireEvent(fullName, oldb, newb, NamingEvent.OBJECT_ADDED, "bind");
             }
          }
       }
@@ -177,8 +221,9 @@ public class NamingServer
       if (name.isEmpty())
       {
          // Empty names are not allowed
-         throw new InvalidNameException();
-      } else if (name.size() > 1) 
+         throw new InvalidNameException("An empty name cannot be passed to rebind");
+      }
+      else if (name.size() > 1) 
       {
          // Recurse to find correct context
 //         System.out.println("rebind#"+name+"#");
@@ -187,7 +232,8 @@ public class NamingServer
          if (ctx instanceof NamingServer)
          {
             ((NamingServer)ctx).rebind(name.getSuffix(1),obj, className);
-         } else if (ctx instanceof Reference)
+         }
+         else if (ctx instanceof Reference)
          {
             // Federation
             if (((Reference)ctx).get("nns") != null)
@@ -196,24 +242,39 @@ public class NamingServer
                cpe.setResolvedObj(ctx);
                cpe.setRemainingName(name.getSuffix(1));
                throw cpe;
-            } else
+            }
+            else
             {
                throw new NotContextException();
             }
-         } else
+         }
+         else
          {
             throw new NotContextException();
          }
-      } else
+      }
+      else
       {
          // Bind object
          if (name.get(0).equals(""))
          {
-            throw new InvalidNameException();
-         } else
+            throw new InvalidNameException("An empty name cannot be passed to rebind");
+         }
+         else
          {
-//            System.out.println("rebind "+name+"="+obj+"("+this+")");
-            setBinding(name,obj,className);
+            String comp = name.get(0);
+            Binding oldb = table.get(comp);
+            Binding newb = setBinding(name,obj,className);
+            // Notify event listeners
+            if(listeners != null)
+            {
+               int type = NamingEvent.OBJECT_CHANGED;
+               if(oldb == null)
+                  type = NamingEvent.OBJECT_ADDED;
+               Name fullName = (Name) prefix.clone();
+               fullName.add(comp);
+               this.fireEvent(fullName, oldb, newb, type, "rebind");
+            }
          }
       }
    }
@@ -225,7 +286,8 @@ public class NamingServer
       {
          // Empty names are not allowed
          throw new InvalidNameException();
-      } else if (name.size() > 1) 
+      }
+      else if (name.size() > 1) 
       {
          // Recurse to find correct context
 //         System.out.println("unbind#"+name+"#");
@@ -234,7 +296,8 @@ public class NamingServer
          if (ctx instanceof NamingServer)
          {
             ((NamingServer)ctx).unbind(name.getSuffix(1));
-         } else if (ctx instanceof Reference)
+         }
+         else if (ctx instanceof Reference)
          {
             // Federation
             if (((Reference)ctx).get("nns") != null)
@@ -243,11 +306,13 @@ public class NamingServer
                cpe.setResolvedObj(ctx);
                cpe.setRemainingName(name.getSuffix(1));
                throw cpe;
-            } else
+            }
+            else
             {
                throw new NotContextException();
             }
-         } else
+         }
+         else
          {
             throw new NotContextException();
          }
@@ -257,13 +322,24 @@ public class NamingServer
          if (name.get(0).equals(""))
          {
             throw new InvalidNameException();
-         } else
+         }
+         else
          {
 //            System.out.println("unbind "+name+"="+getBinding(name));
             if (getBinding(name) != null)
             {
-               removeBinding(name);
-            } else
+               Binding newb = null;
+               Binding oldb = removeBinding(name);
+               // Notify event listeners
+               if(listeners != null)
+               {
+                  int type = NamingEvent.OBJECT_REMOVED;
+                  Name fullName = (Name) prefix.clone();
+                  fullName.addAll(name);
+                  this.fireEvent(fullName, oldb, newb, type, "unbind");
+               }
+            }
+            else
             {
                throw new NameNotFoundException();
             }
@@ -333,31 +409,26 @@ public class NamingServer
    public Collection list(Name name)
       throws NamingException
    {
-//      System.out.println("list of #"+name+"#"+name.size());
       if (name.isEmpty())
-      {
-//         System.out.println("list "+name);
-         
-         Vector list = new Vector();
-         Iterator iter = table.entrySet().iterator();
-         while(iter.hasNext())
+      {  
+         ArrayList<NameClassPair> list = new ArrayList<NameClassPair>();
+         for(Map.Entry<String, Binding> entry : table.entrySet())
          {
-            Map.Entry entry = (Map.Entry)iter.next();
             String key = (String)entry.getKey();
             Binding b = (Binding)entry.getValue();
-
-            list.addElement(new NameClassPair(b.getName(),b.getClassName(),true));
+            NameClassPair ncp = new NameClassPair(b.getName(),b.getClassName(), true);
+            list.add(ncp);
          }
          return list;
-      } else
-      {
-//         System.out.println("list#"+name+"#");
-         
+      }
+      else
+      {  
          Object ctx = getObject(name);
          if (ctx instanceof NamingServer)
          {
             return ((NamingServer)ctx).list(name.getSuffix(1));
-         } else if (ctx instanceof Reference)
+         }
+         else if (ctx instanceof Reference)
          {
             // Federation
             if (((Reference)ctx).get("nns") != null)
@@ -494,13 +565,21 @@ public class NamingServer
             Name fullName = (Name) prefix.clone();
             fullName.addAll(name);
             NamingServer subContext = createNamingServer(fullName, this);
-            setBinding(name, subContext, NamingContext.class.getName());
             subCtx = new NamingContext(null, fullName, getRoot());
+            setBinding(name, subContext, NamingContext.class.getName());
+            // Return the NamingContext as the binding value
+            Binding newb = new Binding(name.toString(), NamingContext.class.getName(), subCtx, true);
+            // Notify event listeners
+            if(listeners != null)
+            {
+               Binding oldb = null;
+               this.fireEvent(fullName, oldb, newb, NamingEvent.OBJECT_ADDED, "createSubcontext");
+            }
          }
       }
       return subCtx;
    }
-      
+
    public Naming getRoot()
    {
       if (parent == null)
@@ -514,13 +593,72 @@ public class NamingServer
    // Package protected ---------------------------------------------
     
    // Protected -----------------------------------------------------
-    
+
+   protected Map<String, Binding> createTable()
+   {
+      return new ConcurrentHashMap<String, Binding>();  
+   }
+
+   /**
+    * Create sub naming.
+    *
+    * @param prefix the prefix
+    * @param parent the parent naming server
+    * @return new sub instance
+    * @throws NamingException for any error
+    */
+   protected NamingServer createNamingServer(Name prefix, NamingServer parent)
+      throws NamingException
+   {
+      return new NamingServer(prefix, parent, eventMgr);
+   }
+
+   protected void fireEvent(Name fullName, Binding oldb, Binding newb, int type,
+         String changeInfo)
+      throws NamingException
+   {
+      if(eventMgr == null)
+      {
+         if(trace)
+            log.trace("Skipping event dispatch because there is no EventMgr");
+         return;
+      }
+
+      if(listeners != null)
+      {
+         if(trace)
+            log.trace("fireEvent, type: "+type+", fullName: "+fullName);
+         HashSet<Integer> scopes = new HashSet<Integer>();
+         scopes.add(EventContext.OBJECT_SCOPE);
+         scopes.add(EventContext.ONELEVEL_SCOPE);
+         scopes.add(EventContext.SUBTREE_SCOPE);
+         eventMgr.fireEvent(fullName, oldb, newb, type, changeInfo, listeners, scopes);
+      }
+      else if(trace)
+      {
+         log.trace("fireEvent, type: "+type+", fullName: "+fullName);
+      }
+      // Traverse to parent for SUBTREE_SCOPE
+      HashSet<Integer> scopes = new HashSet<Integer>();
+      scopes.add(EventContext.SUBTREE_SCOPE);
+      NamingServer nsparent = parent;
+      while(nsparent != null)
+      {
+         if(nsparent.listeners != null)
+         {
+            eventMgr.fireEvent(fullName, oldb, newb, type, changeInfo, nsparent.listeners, scopes);
+            nsparent = nsparent.parent;
+         }
+      }
+   }
+
    // Private -------------------------------------------------------
-   private void setBinding(Name name, Object obj, String className)
+   private Binding setBinding(Name name, Object obj, String className)
    {
       String n = name.toString();
-      table.put(n, new Binding(n, className, obj, true));
-      if( log.isTraceEnabled() )
+      Binding b = new Binding(n, className, obj, true);
+      table.put(n, b);
+      if( trace )
       {
          StringBuffer tmp = new StringBuffer(super.toString());
          tmp.append(", setBinding: name=");
@@ -531,12 +669,13 @@ public class NamingServer
          tmp.append(className);
          log.trace(tmp.toString());
       }
+      return b;
    }
 
    private Binding getBinding(String key)
       throws NameNotFoundException
    {
-      Binding b = (Binding)table.get(key);
+      Binding b = table.get(key);
       if (b == null)
       {
          if( log.isTraceEnabled() )
@@ -547,10 +686,10 @@ public class NamingServer
             tmp.append(" in context ");
             tmp.append(this.prefix);
             tmp.append(", bindings:\n");
-            Iterator bindings = table.values().iterator();
+            Iterator<Binding> bindings = table.values().iterator();
             while( bindings.hasNext() )
             {
-               Binding value = (Binding) bindings.next();
+               Binding value = bindings.next();
                tmp.append(value.getName());
                tmp.append('=');
                if( value.getObject() != null )
@@ -578,9 +717,9 @@ public class NamingServer
       return getBinding(key).getObject();
    }
 
-   private void removeBinding(Name name)
+   private Binding removeBinding(Name name)
    {
-      table.remove(name.get(0));
+      return table.remove(name.get(0));
    }
    
 }
