@@ -80,6 +80,20 @@ public class NamingMCUnitTest extends MicrocontainerTest
       assertNotNull(ctx);
       validateCtx(ctx);
    }
+   /**
+    * Validate that the NamingBeanImpl mc bean is accessible via the
+    * InitialContext(env) using the LocalOnlyContextFactory
+    * @throws Exception
+    */
+   public void testLocaNamingBeanImplViaInitialContextFactory()
+      throws Exception
+   {
+      Properties env = new Properties();
+      env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory");
+      env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      InitialContext ic = new InitialContext(env);
+      validateCtx(ic);
+   }
 
    /**
     * Validate that a SingletonNamingServer mc bean is accessible via the
