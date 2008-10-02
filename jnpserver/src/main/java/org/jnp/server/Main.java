@@ -35,13 +35,16 @@ import java.rmi.Remote;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import javax.net.ServerSocketFactory;
 
 import org.jboss.logging.Logger;
 import org.jboss.net.sockets.DefaultSocketFactory;
-import org.jboss.util.threadpool.BasicThreadPool;
 import org.jboss.util.threadpool.ThreadPool;
+import org.jnp.interfaces.MarshalledValuePair;
 import org.jnp.interfaces.Naming;
 
 /** 
@@ -95,7 +98,7 @@ public class Main implements MainMBean
    protected boolean UseGlobalService = true;
    protected Logger log;
    /** The thread pool used to handle jnp stub lookup requests */
-   protected ThreadPool lookupPool;
+   private Executor lookupExector;
 
    // Static --------------------------------------------------------
    public static void main(String[] args)
@@ -134,18 +137,48 @@ public class Main implements MainMBean
    {
       return theServer;
    }
+   /**
+    * Set the NamingBean/Naming implementation
+    * @param info
+    */
    public void setNamingInfo(NamingBean info)
    {
       this.theServer = info;
    }
 
-   public ThreadPool getLookupPool()
-   {
-      return lookupPool;
-   }
+   @Deprecated
    public void setLookupPool(ThreadPool lookupPool)
    {
-      this.lookupPool = lookupPool;
+      this.lookupExector = new ThreadPoolToExecutor(lookupPool);
+   }
+
+   public Executor getLookupExector()
+   {
+      return lookupExector;
+   }
+   public void setLookupExector(Executor lookupExector)
+   {
+      this.lookupExector = lookupExector;
+   }
+
+   /** Get the call by value flag for jndi lookups.
+    * 
+    * @return true if all lookups are unmarshalled using the caller's TCL,
+    *    false if in VM lookups return the value by reference.
+    */ 
+   public boolean getCallByValue()
+   {
+      return MarshalledValuePair.getEnableCallByReference() == false;
+   }
+   /** Set the call by value flag for jndi lookups.
+    *
+    * @param flag - true if all lookups are unmarshalled using the caller's TCL,
+    *    false if in VM lookups return the value by reference.
+    */
+   public void setCallByValue(boolean flag)
+   {
+      boolean callByValue = ! flag;
+      MarshalledValuePair.setEnableCallByReference(callByValue);
    }
 
    public void setNamingProxy(Object proxy)
@@ -239,7 +272,7 @@ public class Main implements MainMBean
    {
       this.clientSocketFactoryName = factoryClassName;
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      Class clazz = loader.loadClass(clientSocketFactoryName);
+      Class<?> clazz = loader.loadClass(clientSocketFactoryName);
       clientSocketFactory = (RMIClientSocketFactory) clazz.newInstance();
    }
    
@@ -261,7 +294,7 @@ public class Main implements MainMBean
    {
       this.serverSocketFactoryName = factoryClassName;
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      Class clazz = loader.loadClass(serverSocketFactoryName);
+      Class<?> clazz = loader.loadClass(serverSocketFactoryName);
       serverSocketFactory = (RMIServerSocketFactory) clazz.newInstance();
    }
 
@@ -283,7 +316,7 @@ public class Main implements MainMBean
    {
       this.jnpServerSocketFactoryName = factoryClassName;
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      Class clazz = loader.loadClass(jnpServerSocketFactoryName);
+      Class<?> clazz = loader.loadClass(jnpServerSocketFactoryName);
       jnpServerSocketFactory = (ServerSocketFactory) clazz.newInstance();
    }
 
@@ -296,6 +329,9 @@ public class Main implements MainMBean
       this.jnpServerSocketFactory = factory;
    }
 
+   /**
+    * Access the 
+    */
    public Naming getNamingInstance()
    {
       return theServer.getNamingInstance();
@@ -394,10 +430,19 @@ public class Main implements MainMBean
          log.error("Could not start on port " + port, e);
       }
 
-      if( lookupPool == null  )
-         lookupPool = new BasicThreadPool("NamingBootstrap Pool");
+      if( lookupExector == null  )
+      {
+         lookupExector = Executors.newSingleThreadExecutor(new ThreadFactory()
+         {
+            public Thread newThread(Runnable r)
+            {
+               return new Thread("Naming Bootstrap");
+            }
+         }
+         );
+      }
       AcceptHandler handler = new AcceptHandler();
-      lookupPool.run(handler);
+      lookupExector.execute(handler);
    }
 
    /** 
@@ -413,8 +458,8 @@ public class Main implements MainMBean
          // See if the client socket supports setBindAddress(String)
          try
          {
-            Class csfClass = clientSocketFactory.getClass();
-            Class[] parameterTypes = {String.class};
+            Class<?> csfClass = clientSocketFactory.getClass();
+            Class<?>[] parameterTypes = {String.class};
             Method m = csfClass.getMethod("setBindAddress", parameterTypes);
             Object[] args = {addr.getHostAddress()};
             m.invoke(clientSocketFactory, args);
@@ -442,8 +487,8 @@ public class Main implements MainMBean
                // See if the server socket supports setBindAddress(String)
                try
                {
-                  Class ssfClass = serverSocketFactory.getClass();
-                  Class[] parameterTypes = {String.class};
+                  Class<?> ssfClass = serverSocketFactory.getClass();
+                  Class<?>[] parameterTypes = {String.class};
                   Method m = ssfClass.getMethod("setBindAddress", parameterTypes);
                   Object[] args = {addr.getHostAddress()};
                   m.invoke(serverSocketFactory, args);
@@ -483,7 +528,7 @@ public class Main implements MainMBean
                if( trace )
                   log.trace("Accepted bootstrap client: "+socket);
                BootstrapRequestHandler handler = new BootstrapRequestHandler(socket);
-               lookupPool.run(handler);
+               lookupExector.execute(handler);
             }
             catch (IOException e)
             {

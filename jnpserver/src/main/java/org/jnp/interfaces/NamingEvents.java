@@ -21,6 +21,8 @@
  */
 package org.jnp.interfaces;
 
+import java.rmi.RemoteException;
+
 import javax.naming.Name;
 import javax.naming.NamingException;
 import javax.naming.event.EventContext;
@@ -49,7 +51,7 @@ public interface NamingEvents extends Naming
     * @see #removeNamingListener
     */
    void addNamingListener(EventContext context, Name target, int scope, NamingListener l) 
-      throws NamingException;
+      throws NamingException, RemoteException;
 
    /**
     * Removes a listener from receiving naming events
@@ -58,7 +60,7 @@ public interface NamingEvents extends Naming
     * removing the listener.
     * @see #addNamingListener
     */
-   void removeNamingListener(NamingListener l) throws NamingException;
+   void removeNamingListener(NamingListener l) throws NamingException, RemoteException;
 
    /**
     * Determines whether a listener can register interest in a target
@@ -68,5 +70,5 @@ public interface NamingEvents extends Naming
     * @exception NamingException If the context's behavior in this regard cannot
     * be determined.
     */
-   boolean targetMustExist() throws NamingException;
+   boolean targetMustExist() throws NamingException, RemoteException;
 }

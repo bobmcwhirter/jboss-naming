@@ -108,6 +108,17 @@ public class NamingMCUnitTest extends MicrocontainerTest
       validateCtx(ctx);
    }
 
+   public void testMainBean()
+      throws Exception
+   {
+      Properties env = new Properties();
+      env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+      env.setProperty("java.naming.provider.url", "localhost:1099");
+      env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      InitialContext ic = new InitialContext(env);
+      validateCtx(ic);
+   }
+
    /**
     * 
     * @param ic

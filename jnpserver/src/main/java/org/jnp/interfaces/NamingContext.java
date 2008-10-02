@@ -1248,7 +1248,15 @@ public class NamingContext
          throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
       }
       NamingEvents next = (NamingEvents) naming;
-      next.addNamingListener(this, target, scope, l);
+      try
+      {
+         next.addNamingListener(this, target, scope, l);
+      }
+      catch (RemoteException e)
+      {
+         CommunicationException ce = new CommunicationException("addNamingListener failed");
+         ce.initCause(e);
+      }
    }
 
    public void addNamingListener(String target, int scope, NamingListener l)
@@ -1266,7 +1274,15 @@ public class NamingContext
          throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
       }
       NamingEvents next = (NamingEvents) naming;
-      next.removeNamingListener(l);
+      try
+      {
+         next.removeNamingListener(l);
+      }
+      catch (RemoteException e)
+      {
+         CommunicationException ce = new CommunicationException("removeNamingListener failed");
+         ce.initCause(e);
+      }
    }
 
    public boolean targetMustExist()
@@ -1277,7 +1293,17 @@ public class NamingContext
          throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
       }
       NamingEvents next = (NamingEvents) naming;
-      return next.targetMustExist();
+      boolean targetMustExist = true;
+      try
+      {
+         targetMustExist = next.targetMustExist();
+      }
+      catch (RemoteException e)
+      {
+         CommunicationException ce = new CommunicationException("removeNamingListener failed");
+         ce.initCause(e);
+      }
+      return targetMustExist;
    }
    // End EventContext methods
 
