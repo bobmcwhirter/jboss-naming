@@ -43,9 +43,10 @@ public class LocalOnlyContextFactory
          public Context getInitialContext(Hashtable env)
            throws NamingException
          {
-             if (NamingContext.localServer == null)
+            Naming localServer = NamingContext.getLocal();
+             if (localServer == null)
                 throw new NamingException("Local server is not initialized");
-             return new NamingContext(env, null, NamingContext.localServer);
+             return new NamingContext(env, null, localServer);
          }
 
         // ObjectFactory implementation ----------------------------------

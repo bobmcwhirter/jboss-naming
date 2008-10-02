@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
 import javax.naming.Context;
@@ -75,10 +74,10 @@ public class NamingServer
    protected NamingParser parser = new NamingParser();
    protected NamingServer parent;
    /** The NamingListeners registered with this context */
-   private EventListeners listeners;
+   private transient EventListeners listeners;
    /** The manager for EventContext listeners */
-   private EventMgr eventMgr;
-   private boolean trace;
+   private transient EventMgr eventMgr;
+   private transient boolean trace;
 
    // Static --------------------------------------------------------
 
@@ -204,11 +203,18 @@ public class NamingServer
             }
             catch (NameNotFoundException e)
             {
+               Name fullName = (Name) prefix.clone();
+               fullName.addAll(name);
+               SecurityManager sm = System.getSecurityManager();
+               if(sm != null)
+               {
+                  JndiPermission perm = new JndiPermission(fullName, JndiPermission.BIND);
+                  sm.checkPermission(perm);
+               }
+
                Binding newb = setBinding(name,obj,className);
                // Notify event listeners
                Binding oldb = null;
-               Name fullName = (Name) prefix.clone();
-               fullName.addAll(name);
                this.fireEvent(fullName, oldb, newb, NamingEvent.OBJECT_ADDED, "bind");
             }
          }
@@ -262,7 +268,16 @@ public class NamingServer
          }
          else
          {
+            SecurityManager sm = System.getSecurityManager();
+            Name fullName = (Name) prefix.clone();
             String comp = name.get(0);
+            fullName.add(comp);
+            if(sm != null)
+            {
+               JndiPermission perm = new JndiPermission(fullName, JndiPermission.REBIND);
+               sm.checkPermission(perm);
+            }
+            
             Binding oldb = table.get(comp);
             Binding newb = setBinding(name,obj,className);
             // Notify event listeners
@@ -271,8 +286,6 @@ public class NamingServer
                int type = NamingEvent.OBJECT_CHANGED;
                if(oldb == null)
                   type = NamingEvent.OBJECT_ADDED;
-               Name fullName = (Name) prefix.clone();
-               fullName.add(comp);
                this.fireEvent(fullName, oldb, newb, type, "rebind");
             }
          }
@@ -328,16 +341,20 @@ public class NamingServer
 //            System.out.println("unbind "+name+"="+getBinding(name));
             if (getBinding(name) != null)
             {
+               SecurityManager sm = System.getSecurityManager();
+               Name fullName = (Name) prefix.clone();
+               fullName.addAll(name);
+               if(sm != null)
+               {
+                  JndiPermission perm = new JndiPermission(fullName, JndiPermission.UNBIND);
+                  sm.checkPermission(perm);
+               }
+               
                Binding newb = null;
                Binding oldb = removeBinding(name);
                // Notify event listeners
-               if(listeners != null)
-               {
-                  int type = NamingEvent.OBJECT_REMOVED;
-                  Name fullName = (Name) prefix.clone();
-                  fullName.addAll(name);
-                  this.fireEvent(fullName, oldb, newb, type, "unbind");
-               }
+               int type = NamingEvent.OBJECT_REMOVED;
+               this.fireEvent(fullName, oldb, newb, type, "unbind");
             }
             else
             {
@@ -354,9 +371,17 @@ public class NamingServer
 		Object result;
       if (name.isEmpty())
       {
+         SecurityManager sm = System.getSecurityManager();
+         if(sm != null)
+         {
+            JndiPermission perm = new JndiPermission(prefix, JndiPermission.LOOKUP);
+            sm.checkPermission(perm);
+         }
+         
          // Return this
          result = new NamingContext(null, (Name)(prefix.clone()), getRoot());
-      } else if (name.size() > 1)
+      }
+      else if (name.size() > 1)
       {
          // Recurse to find correct context
 //         System.out.println("lookup#"+name+"#");
@@ -365,7 +390,8 @@ public class NamingServer
          if (ctx instanceof NamingServer)
          {
             result = ((NamingServer)ctx).lookup(name.getSuffix(1));
-         } else if (ctx instanceof Reference)
+         }
+         else if (ctx instanceof Reference)
          {
             // Federation
             if (((Reference)ctx).get("nns") != null)
@@ -381,21 +407,36 @@ public class NamingServer
          {
             throw new NotContextException();
          }
-      } else
+      }
+      else
       {
          // Get object to return
          if (name.get(0).equals(""))
          {
-            result = new NamingContext(null, prefix, getRoot());
-         } else
+            SecurityManager sm = System.getSecurityManager();
+            if(sm != null)
+            {
+               JndiPermission perm = new JndiPermission(prefix, JndiPermission.LOOKUP);
+               sm.checkPermission(perm);
+            }
+            result = new NamingContext(null, (Name)(prefix.clone()), getRoot());
+         }
+         else
          {
 //            System.out.println("lookup "+name);
+            SecurityManager sm = System.getSecurityManager();
+            Name fullName = (Name)(prefix.clone());
+            fullName.addAll(name);
+            if(sm != null)
+            {
+               JndiPermission perm = new JndiPermission(fullName, JndiPermission.LOOKUP);
+               sm.checkPermission(perm);
+            }
+            
             Object res = getObject(name);
             
             if (res instanceof NamingServer)
             {
-               Name fullName = (Name)(prefix.clone());
-               fullName.addAll(name);
                result = new NamingContext(null, fullName, getRoot());
             }
             else
@@ -410,7 +451,14 @@ public class NamingServer
       throws NamingException
    {
       if (name.isEmpty())
-      {  
+      {
+         SecurityManager sm = System.getSecurityManager();
+         if(sm != null)
+         {
+            JndiPermission perm = new JndiPermission(prefix, JndiPermission.LIST);
+            sm.checkPermission(perm);
+         }
+
          ArrayList<NameClassPair> list = new ArrayList<NameClassPair>();
          for(Map.Entry<String, Binding> entry : table.entrySet())
          {
@@ -453,6 +501,13 @@ public class NamingServer
    {
       if (name.isEmpty())
       {
+         SecurityManager sm = System.getSecurityManager();
+         if(sm != null)
+         {
+            JndiPermission perm = new JndiPermission(prefix, JndiPermission.LIST_BINDINGS);
+            sm.checkPermission(perm);
+         }
+
          Collection bindings = table.values();
          Collection newBindings = new Vector(bindings.size());
          Iterator iter = bindings.iterator();
@@ -564,6 +619,12 @@ public class NamingServer
          {
             Name fullName = (Name) prefix.clone();
             fullName.addAll(name);
+            SecurityManager sm = System.getSecurityManager();
+            if(sm != null)
+            {
+               JndiPermission perm = new JndiPermission(fullName, JndiPermission.CREATE_SUBCONTEXT);
+               sm.checkPermission(perm);
+            }
             NamingServer subContext = createNamingServer(fullName, this);
             subCtx = new NamingContext(null, fullName, getRoot());
             setBinding(name, subContext, NamingContext.class.getName());
@@ -647,8 +708,8 @@ public class NamingServer
          if(nsparent.listeners != null)
          {
             eventMgr.fireEvent(fullName, oldb, newb, type, changeInfo, nsparent.listeners, scopes);
-            nsparent = nsparent.parent;
          }
+         nsparent = nsparent.parent;
       }
    }
 

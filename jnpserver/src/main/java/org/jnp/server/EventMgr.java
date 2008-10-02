@@ -27,11 +27,29 @@ import javax.naming.Binding;
 import javax.naming.Name;
 
 /**
+ * A plugin for the manager which dispatches EventContext events to listeners 
+ * 
+ * @see {@linkplain ExecutorEventMgr}
  * @author Scott.Stark@jboss.org
  * @version $Revision:$
  */
 public interface EventMgr
 {
+   /**
+    * Dispatch an event to the listeners.
+    * 
+    * @param fullName - the full path of name of the event location
+    * @param oldb - the possibly old binding of the event
+    * @param newb - the possibly new binding of the event
+    * @param type - one of {@link javax.naming.event.NamingEvent#OBJECT_ADDED},
+    * {@link javax.naming.event.NamingEvent#OBJECT_CHANGED},
+    * {@link javax.naming.event.NamingEvent#OBJECT_REMOVED} events.
+    * @param changeInfo - the provider specific change information. The current
+    * impl passes in the name of the operation that generated the event.
+    * @param listeners - the list of NamingListener info for the EventContext
+    * associated with the event.
+    * @param scopes - a set of the EventContext scopes that apply.
+    */
    void fireEvent(Name fullName, Binding oldb, Binding newb, int type,
          String changeInfo, EventListeners listeners, Set<Integer> scopes);
 }

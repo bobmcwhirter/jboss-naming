@@ -21,7 +21,6 @@
  */
 package org.jnp.server;
 
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 import javax.naming.Context;
@@ -40,7 +39,7 @@ import org.jnp.interfaces.NamingContext;
  * a refactoring of the legacy org.jnp.server.Main into a 
  * 
  * @author Scott.Stark@jboss.org
- * @version $Revision:$
+ * @version $Revision$
  */
 public class NamingBeanImpl
    implements NamingBean
@@ -53,6 +52,7 @@ public class NamingBeanImpl
    protected boolean InstallGlobalService = true;
    /** A flag indicating if theServer will try to use the NamingContext.setLocal value */
    protected boolean UseGlobalService = true;
+   /** The plugin for the manager which dispatches EventContext events to listeners */
    private EventMgr eventMgr;
 
    // Static --------------------------------------------------------
@@ -122,7 +122,7 @@ public class NamingBeanImpl
       {
          // See if we should try to reuse the current local server
          if( UseGlobalService == true )
-            theServer = NamingContext.localServer;
+            theServer = NamingContext.getLocal();
          // If not, or there is no server create one
          if( theServer == null )
             theServer = createServer();
@@ -146,12 +146,11 @@ public class NamingBeanImpl
       issue a warning as this means JNDI lookups are going through RMI.
       */
       InitialContext iniCtx = new InitialContext();
-      Hashtable env = iniCtx.getEnvironment();
+      Hashtable<?,?> env = iniCtx.getEnvironment();
       log.debug("InitialContext Environment: ");
       Object providerURL = null;
-      for (Enumeration keys = env.keys(); keys.hasMoreElements(); )
+      for (Object key : env.keySet())
       {
-         Object key = keys.nextElement();
          Object value = env.get(key);
          String type = value == null ? "" : value.getClass().getName();
          log.debug("key="+key+", value("+type+")="+value);
@@ -181,7 +180,7 @@ public class NamingBeanImpl
     */
    public void stop()
    {
-      if(NamingContext.localServer == theServer)
+      if(NamingContext.getLocal() == theServer)
          NamingContext.setLocal(null);
    }
 }

@@ -162,25 +162,43 @@ public class NamingContext
    private static Logger log = Logger.getLogger(NamingContext.class);
 
    // Static --------------------------------------------------------
-   
-   public static Hashtable haServers = new Hashtable();
-
+   /** HAJNDI keyed by partition name */
+   private static Hashtable haServers = new Hashtable();
+   private static RuntimePermission GET_HA_NAMING_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.getHANamingServerForPartition");
+   private static RuntimePermission SET_HA_NAMING_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.setHANamingServerForPartition");
    public static void setHANamingServerForPartition(String partitionName, Naming haServer)
    {
+      SecurityManager security = System.getSecurityManager();
+      if(security != null)
+         security.checkPermission(SET_HA_NAMING_SERVER);
       haServers.put(partitionName, haServer);
    }
 
    public static void removeHANamingServerForPartition(String partitionName)
    {
+      SecurityManager security = System.getSecurityManager();
+      if(security != null)
+         security.checkPermission(SET_HA_NAMING_SERVER);
       haServers.remove(partitionName);
    }
 
    public static Naming getHANamingServerForPartition(String partitionName)
    {
+      SecurityManager security = System.getSecurityManager();
+      if(security != null)
+         security.checkPermission(GET_HA_NAMING_SERVER);
       return (Naming) haServers.get(partitionName);
    }
 
-   public static Naming localServer;
+   /**
+    * The jvm local server used for non-transport access to the naming
+    * server
+    * @see #checkRef(Hashtable)
+    * @see {@linkplain LocalOnlyContextFactory}
+    */
+   private static Naming localServer;
+   private static RuntimePermission GET_LOCAL_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.getLocal");
+   private static RuntimePermission SET_LOCAL_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.setLocal");
 
    // Attributes ----------------------------------------------------
    Naming naming;
@@ -442,12 +460,18 @@ public class NamingContext
       return serverInfo;
    }
 
-   public Naming getLocal()
+   public static Naming getLocal()
    {
+      SecurityManager security = System.getSecurityManager();
+      if(security != null)
+         security.checkPermission(GET_LOCAL_SERVER);
       return localServer;
    }
    public static void setLocal(Naming server)
    {
+      SecurityManager security = System.getSecurityManager();
+      if(security != null)
+         security.checkPermission(SET_LOCAL_SERVER);
       localServer = server;
    }
 
