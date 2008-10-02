@@ -35,8 +35,8 @@ import javax.naming.InitialContext;
 
 import junit.framework.TestCase;
 
+import org.jboss.naming.JndiPermission;
 import org.jnp.server.ExecutorEventMgr;
-import org.jnp.server.JndiPermission;
 import org.jnp.server.NamingBeanImpl;
 import org.jnp.test.support.QueueSecurityManager;
 import org.jnp.test.support.TestSecurityManager;

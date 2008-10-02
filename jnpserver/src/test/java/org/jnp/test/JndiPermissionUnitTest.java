@@ -21,7 +21,7 @@
  */
 package org.jnp.test;
 
-import org.jnp.server.JndiPermission;
+import org.jboss.naming.JndiPermission;
 
 import junit.framework.TestCase;
 

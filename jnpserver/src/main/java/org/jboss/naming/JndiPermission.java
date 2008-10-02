@@ -43,7 +43,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jnp.server;
+package org.jboss.naming;
 
 import java.security.Permission;
 import java.security.PermissionCollection;

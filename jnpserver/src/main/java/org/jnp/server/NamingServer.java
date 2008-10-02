@@ -44,6 +44,7 @@ import javax.naming.event.NamingListener;
 import javax.naming.spi.ResolveResult;
 
 import org.jboss.logging.Logger;
+import org.jboss.naming.JndiPermission;
 import org.jnp.interfaces.Naming;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.interfaces.NamingEvents;
