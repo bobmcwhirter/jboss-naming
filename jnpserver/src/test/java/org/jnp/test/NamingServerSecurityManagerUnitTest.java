@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import junit.framework.TestCase;
@@ -55,8 +56,10 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
    @Override
    protected void setUp() throws Exception
    {
+      System.out.println("+++ setUp, creating NamingBean");
       namingBean = new NamingBeanImpl();
       namingBean.setInstallGlobalService(true);
+      namingBean.setUseGlobalService(false);
       namingBean.setEventMgr(new ExecutorEventMgr());
       namingBean.start();
 
@@ -65,6 +68,10 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory");
       env.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");
       ic = new InitialContext(env);
+   }
+   protected void tearDown()
+   {
+      System.setSecurityManager(null);
    }
 
    /**
@@ -97,6 +104,7 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
       expectedPerms.add(new JndiPermission("path1x", "list"));
       expectedPerms.add(new JndiPermission("path1x", "listBindings"));
       expectedPerms.add(new JndiPermission("path1x/x", "bind"));
+      expectedPerms.add(new JndiPermission("path1x/x", "rebind"));
       expectedPerms.add(new JndiPermission("path1x", "unbind"));
       doBadOps(false);
 
@@ -120,21 +128,43 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
    {
       TestSecurityManager tsm = new TestSecurityManager();
       /*
-       JndiPermission 
+       The permissions that should be needed 
        */
       tsm.addPermission(new JndiPermission("path1", "createSubcontext,lookup,list,listBindings,unbind"));
       tsm.addPermission(new JndiPermission("path1x", "createSubcontext,unbind"));
       tsm.addPermission(new JndiPermission("path1/*", "list,listBindings,lookup"));
       tsm.addPermission(new JndiPermission("path1/x", "bind,rebind,unbind"));
-      tsm.addPermission(new RuntimePermission("exitVM"));
+      tsm.addPermission(new RuntimePermission("setSecurityManager"));
+      tsm.addPermission(new FilePermission("<<ALL FILES>>", "read"));
       tsm.addPermission(new RuntimePermission("createClassLoader"));
       tsm.addPermission(new ReflectPermission("suppressAccessChecks"));
       tsm.addPermission(new SerializablePermission("enableSubstitution"));
-      tsm.addPermission(new FilePermission("<<ALL FILES>>", "read"));
       System.setSecurityManager(tsm);
 
       doOps();
       doBadOps(true);
+   }
+
+   /**
+    * Validate that the JndiPermission("<<ALL BINDINGS>>", "*") allows all
+    * naming operations.
+    * 
+    * @throws Exception
+    */
+   public void testAllPermission()
+      throws Exception
+   {
+      TestSecurityManager tsm = new TestSecurityManager();
+      tsm.addPermission(new JndiPermission("<<ALL BINDINGS>>", "*"));
+      tsm.addPermission(new RuntimePermission("setSecurityManager"));
+      tsm.addPermission(new FilePermission("<<ALL FILES>>", "read"));
+      tsm.addPermission(new RuntimePermission("createClassLoader"));
+      tsm.addPermission(new ReflectPermission("suppressAccessChecks"));
+      tsm.addPermission(new SerializablePermission("enableSubstitution"));
+      System.setSecurityManager(tsm);
+
+      doOps();
+      doBadOps(false);  
    }
 
    /**
@@ -170,12 +200,14 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
       {
          System.out.println(e);
       }
-      ic.createSubcontext("path1x");
+      Context path1x = ic.createSubcontext("path1x");
       try
       {
-         ic.rebind("path1x", "path1x.rebind");
          if(expectFailure)
+         {
+            ic.rebind("path1x", "path1x.rebind");
             fail("Was able to rebind path1x subcontext");
+         }
       }
       catch(AccessControlException e)
       {
