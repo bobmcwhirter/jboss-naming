@@ -24,9 +24,11 @@ package org.jnp.interfaces;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.SerializablePermission;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ReflectPermission;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -36,6 +38,9 @@ import java.rmi.ConnectException;
 import java.rmi.MarshalledObject;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -534,8 +539,7 @@ public class NamingContext
          {
             if( obj != null )
                className = obj.getClass().getName();
-            // Normal object - serialize using a MarshalledValuePair
-            obj = new MarshalledValuePair(obj);
+            obj = createMarshalledValuePair(obj);
          }
          else
          {
@@ -608,7 +612,7 @@ public class NamingContext
                className = obj.getClass().getName();
 
             // Normal object - serialize using a MarshalledValuePair
-            obj = new MarshalledValuePair(obj);
+            obj = createMarshalledValuePair(obj);
          }
          else
          {
@@ -1302,6 +1306,47 @@ public class NamingContext
    }
 
    // Private -------------------------------------------------------
+
+   /**
+    * Isolate the creation of the MarshalledValuePair in a privileged block
+    * when running under a security manager so the following permissions can
+    * be isolated from the caller:
+    * RuntimePermission("createClassLoader")
+      ReflectPermission("suppressAccessChecks")
+      SerializablePermission("enableSubstitution")
+      @return the MarshalledValuePair wrapping obj
+    */
+   private Object createMarshalledValuePair(final Object obj)
+      throws IOException
+   {
+      MarshalledValuePair mvp = null;
+      SecurityManager sm = System.getSecurityManager();
+      if(sm != null)
+      {
+         try
+         {
+            mvp = AccessController.doPrivileged(new PrivilegedExceptionAction<MarshalledValuePair>()
+            {
+               public MarshalledValuePair run() throws Exception
+               {
+                  return new MarshalledValuePair(obj);
+               }
+            }
+            );
+         }
+         catch(PrivilegedActionException e)
+         {
+            IOException ioe = new IOException();
+            ioe.initCause(e.getException());
+            throw ioe;
+         }
+      }
+      else
+      {
+         mvp = new MarshalledValuePair(obj);
+      }
+      return mvp;
+   }
 
    /**
     * Determine the form of the name to pass to the NamingManager operations.
