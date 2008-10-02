@@ -26,14 +26,17 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 
 
+import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.Name;
+import javax.naming.NameClassPair;
 import javax.naming.NamingException;
 
 /**
  *   The naming server/proxy interface
  *      
- *   @see <related>
+ *   @see NamingContext
+ *
  *   @author Scott.Stark@jboss.org
  *   @version $Revision$
  */
@@ -53,10 +56,10 @@ public interface Naming
    public Object lookup(Name name)
       throws NamingException, RemoteException;
 
-   public Collection list(Name name)
+   public Collection<NameClassPair> list(Name name)
       throws NamingException, RemoteException;
 
-   public Collection listBindings(Name name)
+   public Collection<Binding> listBindings(Name name)
       throws NamingException, RemoteException;
       
    public Context createSubcontext(Name name)

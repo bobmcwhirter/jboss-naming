@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
@@ -447,7 +446,7 @@ public class NamingServer
 		return result;
    }
    
-   public Collection list(Name name)
+   public Collection<NameClassPair> list(Name name)
       throws NamingException
    {
       if (name.isEmpty())
@@ -460,10 +459,8 @@ public class NamingServer
          }
 
          ArrayList<NameClassPair> list = new ArrayList<NameClassPair>();
-         for(Map.Entry<String, Binding> entry : table.entrySet())
+         for(Binding b : table.values())
          {
-            String key = (String)entry.getKey();
-            Binding b = (Binding)entry.getValue();
             NameClassPair ncp = new NameClassPair(b.getName(),b.getClassName(), true);
             list.add(ncp);
          }
@@ -485,18 +482,20 @@ public class NamingServer
                cpe.setResolvedObj(ctx);
                cpe.setRemainingName(name.getSuffix(1));
                throw cpe;
-            } else
+            }
+            else
             {
                throw new NotContextException();
             }
-         } else
+         }
+         else
          {
             throw new NotContextException();
          }
       } 
    }
     
-   public Collection listBindings(Name name)
+   public Collection<Binding> listBindings(Name name)
       throws NamingException
    {
       if (name.isEmpty())
@@ -508,12 +507,10 @@ public class NamingServer
             sm.checkPermission(perm);
          }
 
-         Collection bindings = table.values();
-         Collection newBindings = new Vector(bindings.size());
-         Iterator iter = bindings.iterator();
-         while (iter.hasNext())
+         Collection<Binding> bindings = table.values();
+         Collection<Binding> newBindings = new ArrayList<Binding>(bindings.size());
+         for(Binding b : bindings)
          {
-            Binding b = (Binding)iter.next();
             if (b.getObject() instanceof NamingServer)
             {
                Name n = (Name)prefix.clone();
@@ -521,7 +518,8 @@ public class NamingServer
                newBindings.add(new Binding(b.getName(), 
                                            b.getClassName(),
                                            new NamingContext(null, n, getRoot())));
-            } else
+            }
+            else
             {
                newBindings.add(b);
             }
@@ -714,6 +712,7 @@ public class NamingServer
    }
 
    // Private -------------------------------------------------------
+
    private Binding setBinding(Name name, Object obj, String className)
    {
       String n = name.toString();
