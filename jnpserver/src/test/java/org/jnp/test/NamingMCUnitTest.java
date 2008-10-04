@@ -22,6 +22,7 @@
 package org.jnp.test;
 
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.util.Properties;
 
 import javax.naming.InitialContext;
@@ -30,6 +31,8 @@ import junit.framework.Test;
 
 import org.jboss.beans.metadata.api.annotations.Inject;
 import org.jboss.test.kernel.junit.MicrocontainerTest;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.interfaces.TimedSocketFactory;
 
 /**
  * Test bootstraping the naming service using the mc
@@ -108,6 +111,12 @@ public class NamingMCUnitTest extends MicrocontainerTest
       validateCtx(ctx);
    }
 
+   /**
+    * Test the org.jnp.server.Main bean that wraps a NamingBean with remote
+    * access via an rmi proxy
+    * 
+    * @throws Exception
+    */
    public void testMainBean()
       throws Exception
    {
@@ -115,6 +124,28 @@ public class NamingMCUnitTest extends MicrocontainerTest
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
       env.setProperty("java.naming.provider.url", "localhost:1099");
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      InitialContext ic = new InitialContext(env);
+      validateCtx(ic);
+   }
+   /**
+    * Test the org.jnp.server.Main bean that wraps a NamingBean with remote
+    * access via an rmi proxy using custom socket factories
+    * 
+    * @throws Exception
+    */
+   public void testMainBeanSFs()
+      throws Exception
+   {
+      InetAddress localAddr = InetAddress.getLocalHost();
+      getLog().debug("InetAddress.getLocalHost(): "+localAddr);
+      Properties env = new Properties();
+      env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
+      env.setProperty("java.naming.provider.url", "localhost:2099");
+      env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      /*
+      env.setProperty(TimedSocketFactory.JNP_TIMEOUT, "1000");
+      env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "1000");
+      */
       InitialContext ic = new InitialContext(env);
       validateCtx(ic);
    }
@@ -127,13 +158,13 @@ public class NamingMCUnitTest extends MicrocontainerTest
    protected void validateCtx(InitialContext ic)
       throws Exception
    {
-      Integer i1 = (Integer) ctx.lookup("ints/1");
+      Integer i1 = (Integer) ic.lookup("ints/1");
       assertEquals("ints/1", new Integer(1), i1);
-      String s1 = (String) ctx.lookup("strings/1");
+      String s1 = (String) ic.lookup("strings/1");
       assertEquals("strings/1", "String1", s1);
-      BigInteger bi1 = (BigInteger) ctx.lookup("bigint/1");
+      BigInteger bi1 = (BigInteger) ic.lookup("bigint/1");
       assertEquals("bigint/1", new BigInteger("123456789"), bi1);
-      Properties env = (Properties) ctx.lookup("env-props");
+      Properties env = (Properties) ic.lookup("env-props");
       Properties expected = new Properties();
       expected.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory");
       expected.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");

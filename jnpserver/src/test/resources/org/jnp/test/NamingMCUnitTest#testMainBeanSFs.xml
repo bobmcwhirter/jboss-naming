@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Test the org.jnp.server.Main bean with custom socket factories
+    $Id:$
+-->
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_2_0.xsd"
+    xmlns="urn:jboss:bean-deployer:2.0">
+
+    <bean name="InitialContextFactory" class="org.jboss.naming.InitialContextFactoryBean">
+        <property name="env">
+            <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                <entry>
+                    <key>java.naming.factory.initial</key>
+                    <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                </entry>
+                <entry>
+                    <key>java.naming.factory.url</key>
+                    <value>org.jboss.naming:org.jnp.interfaces</value>
+                </entry>
+            </map>
+        </property>
+        <depends>testLocaNamingBeanImpl</depends>
+    </bean>
+    <bean name="JndiBindings" class="org.jboss.naming.BindingsInitializer">
+        <property name="ctx">
+            <inject bean="InitialContextFactory" property="ctx"/>
+        </property>
+        <property name="bindings">
+            <map keyClass="java.lang.String">
+                <entry>
+                    <key>ints/1</key>
+                    <value class="java.lang.Integer">1</value>
+                </entry>
+                <entry>
+                    <key>strings/1</key>
+                    <value class="java.lang.String">String1</value>
+                </entry>
+                <entry>
+                    <key>bigint/1</key>
+                    <value class="java.math.BigInteger">123456789</value>
+                </entry>
+                <entry>
+                    <key>env-props</key>
+                    <value>
+                        <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                        <entry>
+                            <key>java.naming.factory.initial</key>
+                            <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                        </entry>
+                        <entry>
+                            <key>java.naming.factory.url</key>
+                            <value>org.jboss.naming:org.jnp.interfaces</value>
+                        </entry>
+                        </map>
+                    </value>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean name="LookupPool">
+        <constructor factoryMethod="newFixedThreadPool"
+            factoryClass="java.util.concurrent.Executors">
+            <parameter>2</parameter>
+        </constructor>
+    </bean>
+    <bean name="testLocaNamingBeanImpl" class="org.jnp.server.NamingBeanImpl">
+        <!-- Install this bean as the global JVM NamingServer -->
+        <property name="installGlobalService">true</property>
+        
+        <property name="useGlobalService">false</property>
+    </bean>
+    <bean name="jboss:service=Naming" class="org.jnp.server.Main">
+        <property name="namingInfo"><inject bean="testLocaNamingBeanImpl" /></property>
+        <!-- The call by value mode. true if all lookups are unmarshalled using
+            the caller's TCL, false if in VM lookups return the value by reference.
+        -->
+        <property name="callByValue">false</property>
+        
+        <!-- The listening port for the bootstrap JNP service. Set this to -1
+            to run the NamingService without the JNP invoker listening port.
+        -->
+        <property name="port">2099</property>
+
+        <!-- The bootstrap JNP server bind address. This also sets the default
+            RMI service bind address. Empty == all addresses
+        -->
+        <property name="bindAddress">${jboss.bind.address:localhost}</property>
+        <!-- The port of the RMI naming service, 0 == anonymous -->
+        <property name="rmiPort">2100</property>
+        <!-- The thread pool service used to control the bootstrap lookups -->
+        <property name="lookupExector"><inject bean="LookupPool"/></property>
+
+        <property name="serverSocketFactoryBean"><inject bean="ServerSocketFactoryBean"/></property>
+        <property name="clientSocketFactoryBean"><inject bean="ClientSocketFactoryBean"/></property>
+    </bean>
+
+    <bean name="ServerSocketFactoryBean" class="org.jnp.test.support.ServerSocketFactoryBean">
+        <!-- The RMI service bind address. Empty == all addresses
+        -->
+        <property name="rmiBindAddress">${jboss.bind.address:localhost}</property>
+    </bean>
+    <bean name="ClientSocketFactoryBean" class="org.jnp.test.support.ClientSocketFactoryBean">
+    </bean>
+
+</deployment>

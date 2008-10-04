@@ -24,10 +24,14 @@ package org.jnp.interfaces;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 import javax.net.SocketFactory;
+
+import org.jboss.logging.Logger;
 
 /** A concrete implementation of the SocketFactory that supports a configurable
  timeout for the initial socket connection as well as the SO_TIMEOUT used to
@@ -38,6 +42,7 @@ import javax.net.SocketFactory;
  */
 public class TimedSocketFactory extends SocketFactory
 {
+   private static Logger log = Logger.getLogger(TimedSocketFactory.class);
    public static final String JNP_TIMEOUT = "jnp.timeout";
    public static final String JNP_SO_TIMEOUT = "jnp.sotimeout";
 
@@ -50,7 +55,7 @@ public class TimedSocketFactory extends SocketFactory
    public TimedSocketFactory()
    {
    }
-   public TimedSocketFactory(Hashtable env)
+   public TimedSocketFactory(Hashtable<String, ?> env)
    {
       String value = (String) env.get(JNP_TIMEOUT);
       if( value != null )
@@ -79,97 +84,18 @@ public class TimedSocketFactory extends SocketFactory
    public Socket createSocket(InetAddress hostAddr, int port, InetAddress localAddr, int localPort)
       throws IOException
    {
-      Socket socket = null;
-      if( timeout <= 0 )
-         socket = new Socket(hostAddr, port, localAddr, localPort);
-      else
-         socket = createSocket(hostAddr, port, localAddr, localPort, timeout);
-
+      log.debug("createSocket, hostAddr: "+hostAddr+", port: "+port+", localAddr: "+localAddr+", localPort: "+localPort+", timeout: "+timeout);
+      Socket socket = new Socket();
+      InetSocketAddress connectAddr = new InetSocketAddress(hostAddr, port);
+      if(localAddr != null)
+      {
+         // Bind 
+         InetSocketAddress bindAddr = new InetSocketAddress(localAddr, localPort);
+         socket.bind(bindAddr);
+      }
       socket.setSoTimeout(soTimeout);
+      socket.connect(connectAddr, timeout);
       return socket;
    }
 
-   protected Socket createSocket(InetAddress hostAddr, int port,
-      InetAddress localAddr, int localPort, int connectTimeout)
-      throws IOException
-   {
-      ConnectThread t = new ConnectThread();
-      Socket socket = t.createSocket(hostAddr, port, localAddr, localPort, connectTimeout);
-      return socket;
-   }
-
-   /** A subclass of Thread used to time the blocking connect operation
-    and notify the thread attempting the socket connect of a timeout.
-    */
-   class ConnectThread extends Thread
-   {
-      IOException ex;
-      InetAddress hostAddr;
-      InetAddress localAddr;
-      int port;
-      int localPort;
-      int connectTimeout;
-      Socket socket;
-
-      ConnectThread()
-      {
-         super("JNP ConnectThread");
-         super.setDaemon(true);
-      }
-
-      /** Perform the connection in a background thread and wait upto
-       connectTimeout milliseconds for it to complete before throwing
-       a ConnectionException
-       */
-      Socket createSocket(InetAddress hostAddr, int port,
-         InetAddress localAddr, int localPort, int connectTimeout)
-         throws IOException
-      {
-         this.hostAddr = hostAddr;
-         this.port = port;
-         this.localAddr = localAddr;
-         this.localPort = localPort;
-         this.connectTimeout = connectTimeout;
-
-         try
-         {
-            synchronized( this )
-            {
-               // Perform the socket connection in a background thread
-               this.start();
-               // Wait for upto connectTimeout milliseconds for the connection
-               this.wait(connectTimeout);
-            }
-         }
-         catch(InterruptedException e)
-         {
-            throw new ConnectException("Connect attempt timed out");
-         }
-
-         // See if the connect thread exited due to an exception
-         if( ex != null )
-            throw ex;
-         // If socket is null we timed out while waiting
-         if( socket == null )
-            throw new ConnectException("Connect attempt timed out");
-
-         return socket;
-      }
-
-      public void run()
-      {
-         try
-         {
-            socket = new Socket(hostAddr, port, localAddr, localPort);
-            synchronized( this )
-            {
-               this.notify();
-            }
-         }
-         catch(IOException e)
-         {
-            this.ex = e;
-         }
-      }
-   }
 }

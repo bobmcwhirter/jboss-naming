@@ -156,6 +156,12 @@ public class Main implements MainMBean
    {
       return lookupExector;
    }
+   /**
+    * Set the Executor to use for bootstrap socket lookup handling. Note
+    * that this must support at least 2 thread to avoid hanging the AcceptHandler
+    * accept loop.
+    * @param lookupExector - An Executor that supports at least 2 threads
+    */
    public void setLookupExector(Executor lookupExector)
    {
       this.lookupExector = lookupExector;
@@ -432,7 +438,7 @@ public class Main implements MainMBean
 
       if( lookupExector == null  )
       {
-         lookupExector = Executors.newSingleThreadExecutor(new ThreadFactory()
+         lookupExector = Executors.newFixedThreadPool(2, new ThreadFactory()
          {
             public Thread newThread(Runnable r)
             {
@@ -557,10 +563,14 @@ public class Main implements MainMBean
          // Return the naming server stub
          try
          {
+            if(log.isTraceEnabled())
+               log.trace("BootstrapRequestHandler.run start");
             OutputStream os = socket.getOutputStream();
             ObjectOutputStream out = new ObjectOutputStream(os);
             out.writeObject(serverStub);
             out.close();
+            if(log.isTraceEnabled())
+               log.trace("BootstrapRequestHandler.run end");
          }
          catch (IOException ex)
          {
