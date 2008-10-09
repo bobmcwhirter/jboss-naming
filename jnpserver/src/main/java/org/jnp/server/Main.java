@@ -38,6 +38,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ServerSocketFactory;
 
@@ -84,6 +85,8 @@ public class Main implements MainMBean
    protected InetAddress bindAddress;
    /** The interface to bind to for the Naming RMI server */ 
    protected InetAddress rmiBindAddress;
+   /** Should the java.rmi.server.hostname property to rmiBindAddress */
+   private boolean enableRmiServerHostname;
    /** The serverSocket listen queue depth */
    protected int backlog = 50;
    /** The jnp protocol listening port. The default is 1099, the same as
@@ -130,6 +133,7 @@ public class Main implements MainMBean
       setPort(Integer.getInteger("jnp.port",getPort()).intValue());
       setRmiPort(Integer.getInteger("jnp.rmiPort",getRmiPort()).intValue());
       log = Logger.getLogger(categoryName);
+      log.debug("isTraceEnabled: "+log.isTraceEnabled());
    }
 
    // Public --------------------------------------------------------
@@ -241,6 +245,16 @@ public class Main implements MainMBean
          rmiBindAddress = InetAddress.getByName(host);
    }
 
+   
+   public boolean isEnableRmiServerHostname()
+   {
+      return enableRmiServerHostname;
+   }
+   public void setEnableRmiServerHostname(boolean enableRmiServerHostname)
+   {
+      this.enableRmiServerHostname = enableRmiServerHostname;
+   }
+
    public int getBacklog()
    {
       return backlog;
@@ -346,6 +360,10 @@ public class Main implements MainMBean
    public void start()
       throws Exception
    {
+      log.debug("Begin start");
+      // Set the java.rmi.server.hostname to the bind address if not set
+      if(rmiBindAddress != null && System.getProperty("java.rmi.server.hostname") == null)
+         System.setProperty("java.rmi.server.hostname", rmiBindAddress.getHostAddress());
 
       // Initialize the custom socket factories with any bind address
       initCustomSocketFactories();
@@ -362,6 +380,7 @@ public class Main implements MainMBean
       {
          initBootstrapListener();
       }
+      log.debug("End start");
    }
 
    public void stop()
@@ -438,14 +457,8 @@ public class Main implements MainMBean
 
       if( lookupExector == null  )
       {
-         lookupExector = Executors.newFixedThreadPool(2, new ThreadFactory()
-         {
-            public Thread newThread(Runnable r)
-            {
-               return new Thread("Naming Bootstrap");
-            }
-         }
-         );
+         log.debug("Using default newFixedThreadPool(2)");
+         lookupExector = Executors.newFixedThreadPool(2, BootstrapThreadFactory.getInstance());
       }
       AcceptHandler handler = new AcceptHandler();
       lookupExector.execute(handler);
@@ -530,6 +543,8 @@ public class Main implements MainMBean
             // Accept a connection
             try
             {
+               if( trace )
+                  log.trace("Enter accept on: "+serverSocket);
                socket = serverSocket.accept();
                if( trace )
                   log.trace("Accepted bootstrap client: "+socket);
@@ -585,6 +600,22 @@ public class Main implements MainMBean
             {
             }
          }
+      }
+   }
+   private static class BootstrapThreadFactory implements ThreadFactory
+   {
+      private static final AtomicInteger tnumber = new AtomicInteger(1);
+      static BootstrapThreadFactory instance;
+      static synchronized ThreadFactory getInstance()
+      {
+         if(instance == null)
+            instance = new BootstrapThreadFactory();
+         return instance;
+      }
+      public Thread newThread(Runnable r)
+      {
+         Thread t = new Thread(r, "Naming Bootstrap#"+tnumber.getAndIncrement());
+         return t;
       }
    }
 }

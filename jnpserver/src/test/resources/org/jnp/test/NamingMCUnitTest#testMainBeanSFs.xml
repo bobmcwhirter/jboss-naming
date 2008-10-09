@@ -62,6 +62,7 @@
     <bean name="LookupPool">
         <constructor factoryMethod="newFixedThreadPool"
             factoryClass="java.util.concurrent.Executors">
+            <!-- At least 2 threads are required -->
             <parameter>2</parameter>
         </constructor>
     </bean>

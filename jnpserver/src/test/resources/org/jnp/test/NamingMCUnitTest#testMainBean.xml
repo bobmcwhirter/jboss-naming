@@ -57,8 +57,11 @@
     </bean>
 
     <bean name="LookupPool">
-        <constructor factoryMethod="newSingleThreadExecutor"
-            factoryClass="java.util.concurrent.Executors"/>
+        <constructor factoryMethod="newFixedThreadPool"
+            factoryClass="java.util.concurrent.Executors">
+            <!-- At least 2 threads are required -->
+            <parameter>2</parameter>
+        </constructor>
     </bean>
     <bean name="testLocaNamingBeanImpl" class="org.jnp.server.NamingBeanImpl">
         <!-- Install this bean as the global JVM NamingServer -->
@@ -87,6 +90,8 @@
         <!-- The RMI service bind address. Empty == all addresses
         -->
         <property name="rmiBindAddress">${jboss.bind.address:localhost}</property>
+        <!-- Set the java.rmi.server.hostname system property to rmiBindAddress -->
+        <property name="enableRmiServerHostname">true</property>
         <!-- The thread pool service used to control the bootstrap lookups -->
         <property name="lookupExector"><inject bean="LookupPool"/></property>
     </bean>

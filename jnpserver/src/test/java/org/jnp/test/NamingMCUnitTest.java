@@ -31,7 +31,6 @@ import junit.framework.Test;
 
 import org.jboss.beans.metadata.api.annotations.Inject;
 import org.jboss.test.kernel.junit.MicrocontainerTest;
-import org.jnp.interfaces.NamingContext;
 import org.jnp.interfaces.TimedSocketFactory;
 
 /**
@@ -124,6 +123,8 @@ public class NamingMCUnitTest extends MicrocontainerTest
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
       env.setProperty("java.naming.provider.url", "localhost:1099");
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      env.setProperty(TimedSocketFactory.JNP_TIMEOUT, "10000");
+      env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "10000");
       InitialContext ic = new InitialContext(env);
       validateCtx(ic);
    }
@@ -142,10 +143,8 @@ public class NamingMCUnitTest extends MicrocontainerTest
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
       env.setProperty("java.naming.provider.url", "localhost:2099");
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
-      /*
       env.setProperty(TimedSocketFactory.JNP_TIMEOUT, "1000");
       env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "1000");
-      */
       InitialContext ic = new InitialContext(env);
       validateCtx(ic);
    }

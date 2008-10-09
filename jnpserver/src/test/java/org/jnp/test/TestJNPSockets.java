@@ -47,7 +47,7 @@ public class TestJNPSockets extends TestCase
    /** The actual namingMain service impl bean */
    private static NamingBeanImpl namingBean;
    /** */
-   private static Main namingMain = new Main();
+   private static Main namingMain = new Main("org.jnp.server");
 
    static int serverPort;
 
