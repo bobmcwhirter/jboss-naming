@@ -53,6 +53,13 @@ public interface MainMBean extends NamingBean
    void setBacklog(int backlog);   
    int getBacklog();
 
+   public NamingBean getNamingInfo();
+   /**
+    * Set the NamingBean/Naming implementation
+    * @param info
+    */
+   public void setNamingInfo(NamingBean info);
+
    /**
     * Get the call by value flag for jndi lookups.
     * @return true if all lookups are unmarshalled using the caller's TCL, false if in VM lookups return the value by reference.    */
