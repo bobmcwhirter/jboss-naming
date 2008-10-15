@@ -110,6 +110,6 @@ public interface MainMBean extends NamingBean
    
    public void start() throws Exception;
    
-   public void stop();
+   public void stop() throws Exception;
    
 }
