@@ -53,6 +53,16 @@ public interface MainMBean extends NamingBean
    void setBacklog(int backlog);   
    int getBacklog();
 
+   /**
+    * Get the call by value flag for jndi lookups.
+    * @return true if all lookups are unmarshalled using the caller's TCL, false if in VM lookups return the value by reference.    */
+   boolean getCallByValue() ;
+
+   /**
+    * Set the call by value flag for jndi lookups.
+    * @param flag - true if all lookups are unmarshalled using the caller's TCL, false if in VM lookups return the value by reference.    */
+   void setCallByValue(boolean flag) ;
+
    /** Whether the MainMBean's Naming server will be installed as the NamingContext.setLocal global value */
    void setInstallGlobalService(boolean flag);
    boolean getInstallGlobalService();
