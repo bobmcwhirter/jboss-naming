@@ -21,6 +21,7 @@
  */
 package org.jnp.server;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
@@ -112,6 +113,11 @@ public interface MainMBean extends NamingBean
    public String getJNPServerSocketFactory();
    void setJNPServerSocketFactory(String factoryClassName) 
       throws ClassNotFoundException, InstantiationException, IllegalAccessException;
+
+   public Object getNamingProxy(Object proxy)
+      throws Exception;
+   public void setNamingProxy(Object proxy)
+      throws IOException;
 
    // Operations ----------------------------------------------------
    

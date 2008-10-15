@@ -191,6 +191,11 @@ public class Main implements MainMBean
       MarshalledValuePair.setEnableCallByReference(callByValue);
    }
 
+   public Object getNamingProxy(Object proxy)
+      throws Exception
+   {
+      return serverStub.get();
+   }
    public void setNamingProxy(Object proxy)
       throws IOException
    {
@@ -416,7 +421,8 @@ public class Main implements MainMBean
       Remote stub = UnicastRemoteObject.exportObject(instance,
             rmiPort, clientSocketFactory, serverSocketFactory);
       log.debug("NamingServer stub: "+stub);
-      serverStub = new MarshalledObject(stub);      
+      serverStub = new MarshalledObject(stub);
+      isStubExported = true;
    }
 
    /** Bring up the bootstrap lookup port for obtaining the naming service
