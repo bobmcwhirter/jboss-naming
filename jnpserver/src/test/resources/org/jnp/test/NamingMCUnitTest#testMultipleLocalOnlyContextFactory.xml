@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:jboss:bean-deployer bean-deployer_2_0.xsd"
+    xmlns="urn:jboss:bean-deployer:2.0">
+    
+    <!-- An InitialContextFactory that uses the NamingContext.getLocal() Naming -->
+    <bean name="InitialContextFactory#1" class="org.jboss.naming.InitialContextFactoryBean">
+        <alias>InitialContextFactory</alias>
+        <property name="env">
+            <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                <entry>
+                    <key>java.naming.factory.initial</key>
+                    <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                </entry>
+                <entry>
+                    <key>java.naming.factory.url</key>
+                    <value>org.jboss.naming:org.jnp.interfaces</value>
+                </entry>
+            </map>
+        </property>
+        <depends>testLocaNamingBeanImpl#1</depends>
+    </bean>
+    <!-- An InitialContextFactory that uses the env jnp.namingInstanceName Naming -->
+    <bean name="InitialContextFactory#2" class="org.jboss.naming.InitialContextFactoryBean">
+        <property name="env">
+            <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                <entry>
+                    <key>java.naming.factory.initial</key>
+                    <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                </entry>
+                <entry>
+                    <key>java.naming.factory.url</key>
+                    <value>org.jboss.naming:org.jnp.interfaces</value>
+                </entry>
+                <entry>
+                    <key>jnp.namingInstance</key>
+                    <value><inject bean="testLocaNamingBeanImpl#2" property="namingInstance"/></value>
+                </entry>
+                <entry>
+                    <key>jnp.namingInstanceName</key>
+                    <value>testLocaNamingBeanImpl#2</value>
+                </entry>
+            </map>
+        </property>
+        <depends>testLocaNamingBeanImpl#2</depends>
+    </bean>
+    <!-- An InitialContextFactory that uses the testLocaNamingBeanImpl#2 Naming bean -->
+    <bean name="InitialContextFactory#3" class="org.jnp.interfaces.LocalOnlyContextFactory">
+        <property name="naming"><inject bean="testLocaNamingBeanImpl#3" property="namingInstance"/></property>
+    </bean>
+    <bean name="InitialContext#3" class="javax.naming.InitialContext">
+        <constructor factoryMethod="getInitialContext">
+            <factory bean="InitialContextFactory#3"/>
+            <parameter><null/></parameter>
+        </constructor>
+    </bean>
+    
+    <bean name="JndiBindings#1" class="org.jboss.naming.BindingsInitializer">
+        <property name="ctx">
+            <inject bean="InitialContextFactory#1" property="ctx"/>
+        </property>
+        <property name="bindings">
+            <map keyClass="java.lang.String">
+                <entry>
+                    <key>ints/1</key>
+                    <value class="java.lang.Integer">1</value>
+                </entry>
+                <entry>
+                    <key>strings/1</key>
+                    <value class="java.lang.String">String1</value>
+                </entry>
+                <entry>
+                    <key>bigint/1</key>
+                    <value class="java.math.BigInteger">123456789</value>
+                </entry>
+                <entry>
+                    <key>env-props</key>
+                    <value>
+                        <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                            <entry>
+                                <key>java.naming.factory.initial</key>
+                                <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                            </entry>
+                            <entry>
+                                <key>java.naming.factory.url</key>
+                                <value>org.jboss.naming:org.jnp.interfaces</value>
+                            </entry>
+                        </map>
+                    </value>
+                </entry>
+            </map>
+        </property>
+    </bean>
+    <bean name="JndiBindings#2" class="org.jboss.naming.BindingsInitializer">
+        <property name="ctx">
+            <inject bean="InitialContextFactory#2" property="ctx"/>
+        </property>
+        <property name="bindings">
+            <map keyClass="java.lang.String">
+                <entry>
+                    <key>ints/2</key>
+                    <value class="java.lang.Integer">2</value>
+                </entry>
+                <entry>
+                    <key>strings/2</key>
+                    <value class="java.lang.String">String2</value>
+                </entry>
+                <entry>
+                    <key>bigint/2</key>
+                    <value class="java.math.BigInteger">987654321</value>
+                </entry>
+                <entry>
+                    <key>env-props</key>
+                    <value>
+                        <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                            <entry>
+                                <key>java.naming.factory.initial</key>
+                                <value>org.jnp.interfaces.LocalOnlyContextFactory#2</value>
+                            </entry>
+                            <entry>
+                                <key>java.naming.factory.url</key>
+                                <value>factory#2</value>
+                            </entry>
+                        </map>
+                    </value>
+                </entry>
+            </map>
+        </property>
+    </bean>
+    <bean name="JndiBindings#3" class="org.jboss.naming.BindingsInitializer">
+        <property name="ctx">
+            <inject bean="InitialContext#3" />
+        </property>
+        <property name="bindings">
+            <map keyClass="java.lang.String">
+                <entry>
+                    <key>ints/3</key>
+                    <value class="java.lang.Integer">3</value>
+                </entry>
+                <entry>
+                    <key>strings/3</key>
+                    <value class="java.lang.String">String3</value>
+                </entry>
+                <entry>
+                    <key>bigint/3</key>
+                    <value class="java.math.BigInteger">333333333</value>
+                </entry>
+                <entry>
+                    <key>env-props</key>
+                    <value>
+                        <map class="java.util.Properties" keyClass="java.lang.String" valueClass="java.lang.String">
+                            <entry>
+                                <key>java.naming.factory.initial</key>
+                                <value>org.jnp.interfaces.LocalOnlyContextFactory#3</value>
+                            </entry>
+                            <entry>
+                                <key>java.naming.factory.url</key>
+                                <value>factory#3</value>
+                            </entry>
+                        </map>
+                    </value>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean name="testLocaNamingBeanImpl#1" class="org.jnp.server.NamingBeanImpl">
+        <!-- Install this bean as the global JVM NamingServer -->
+        <property name="installGlobalService">true</property>
+        <property name="useGlobalService">false</property>
+    </bean>
+    <bean name="testLocaNamingBeanImpl#2" class="org.jnp.server.NamingBeanImpl">
+        <!-- Do not install this bean as the global JVM NamingServer -->
+        <property name="installGlobalService">false</property>
+        <property name="useGlobalService">false</property>
+    </bean>
+    <bean name="testLocaNamingBeanImpl#3" class="org.jnp.server.NamingBeanImpl">
+        <!-- Do not install this bean as the global JVM NamingServer -->
+        <property name="installGlobalService">false</property>
+        <property name="useGlobalService">false</property>
+    </bean>
+</deployment>
