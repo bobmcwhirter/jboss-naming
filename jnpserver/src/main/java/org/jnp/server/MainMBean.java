@@ -114,7 +114,7 @@ public interface MainMBean extends NamingBean
    void setJNPServerSocketFactory(String factoryClassName) 
       throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-   public Object getNamingProxy(Object proxy)
+   public Object getNamingProxy()
       throws Exception;
    public void setNamingProxy(Object proxy)
       throws IOException;

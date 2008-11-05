@@ -191,7 +191,7 @@ public class Main implements MainMBean
       MarshalledValuePair.setEnableCallByReference(callByValue);
    }
 
-   public Object getNamingProxy(Object proxy)
+   public Object getNamingProxy()
       throws Exception
    {
       return serverStub.get();
