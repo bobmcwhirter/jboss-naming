@@ -92,7 +92,7 @@ public class LocalOnlyContextFactory implements InitialContextFactory
          if(lswr != null)
             localServer = lswr.get();
          if(trace && localServer != null)
-            log.trace("Set naming from localServers#"+name);
+            log.trace("Set naming from "+NamingContext.JNP_NAMING_INSTANCE_NAME+"="+name);
       }
       // Lastly try the JVM global NamingContext.local value
       if (localServer == null)
