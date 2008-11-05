@@ -23,6 +23,7 @@ package org.jboss.naming;
 
 import java.util.Map;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
@@ -37,7 +38,7 @@ public class BindingsInitializer
 {
    private static Logger log = Logger.getLogger(BindingsInitializer.class);
    private Map<String, ?> bindings;
-   private InitialContext ctx;
+   private Context ctx;
 
    /**
     * The key/value bindings to add to jndi
@@ -55,7 +56,7 @@ public class BindingsInitializer
     * Get the InitialContext into which the bindings will be made.
     * @return
     */
-   public InitialContext getCtx()
+   public Context getCtx()
    {
       return ctx;
    }
@@ -63,7 +64,7 @@ public class BindingsInitializer
     * Set the InitialContext into which the bindings will be made.
     * @param ctx
     */
-   public void setCtx(InitialContext ctx)
+   public void setCtx(Context ctx)
    {
       this.ctx = ctx;
    }
