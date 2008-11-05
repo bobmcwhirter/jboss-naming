@@ -19,7 +19,7 @@
         </layout>
     </appender>
     
-    <category name="org.jnp.server">
+    <category name="org.jnp">
         <priority value="TRACE"/>
     </category>
     

@@ -77,6 +77,7 @@ public class NamingServer
    private transient EventListeners listeners;
    /** The manager for EventContext listeners */
    private transient EventMgr eventMgr;
+   private transient SecurityManager secMgr;
    private transient boolean trace;
 
    // Static --------------------------------------------------------
@@ -92,9 +93,15 @@ public class NamingServer
    public NamingServer(Name prefix, NamingServer parent)
       throws NamingException
    {
-      this(null, null, null);   
+      this(prefix, parent, null);   
    }
    public NamingServer(Name prefix, NamingServer parent, EventMgr eventMgr)
+      throws NamingException
+   {
+      this(prefix, parent, eventMgr, null);  
+   }
+   public NamingServer(Name prefix, NamingServer parent, EventMgr eventMgr,
+         SecurityManager secMgr)
       throws NamingException
    {
       if (prefix == null)
@@ -102,9 +109,9 @@ public class NamingServer
       this.prefix = prefix;      
       this.parent = parent;
       this.eventMgr = eventMgr;
+      this.secMgr = secMgr;
       this.trace = log.isTraceEnabled();
    }
-
 
    // Public --------------------------------------------------------
 
@@ -205,7 +212,7 @@ public class NamingServer
             {
                Name fullName = (Name) prefix.clone();
                fullName.addAll(name);
-               SecurityManager sm = System.getSecurityManager();
+               SecurityManager sm = getSecurityManager();
                if(sm != null)
                {
                   JndiPermission perm = new JndiPermission(fullName, JndiPermission.BIND);
@@ -268,7 +275,7 @@ public class NamingServer
          }
          else
          {
-            SecurityManager sm = System.getSecurityManager();
+            SecurityManager sm = getSecurityManager();
             Name fullName = (Name) prefix.clone();
             String comp = name.get(0);
             fullName.add(comp);
@@ -341,7 +348,7 @@ public class NamingServer
 //            System.out.println("unbind "+name+"="+getBinding(name));
             if (getBinding(name) != null)
             {
-               SecurityManager sm = System.getSecurityManager();
+               SecurityManager sm = getSecurityManager();
                Name fullName = (Name) prefix.clone();
                fullName.addAll(name);
                if(sm != null)
@@ -371,7 +378,7 @@ public class NamingServer
 		Object result;
       if (name.isEmpty())
       {
-         SecurityManager sm = System.getSecurityManager();
+         SecurityManager sm = getSecurityManager();
          if(sm != null)
          {
             JndiPermission perm = new JndiPermission(prefix, JndiPermission.LOOKUP);
@@ -413,7 +420,7 @@ public class NamingServer
          // Get object to return
          if (name.get(0).equals(""))
          {
-            SecurityManager sm = System.getSecurityManager();
+            SecurityManager sm = getSecurityManager();
             if(sm != null)
             {
                JndiPermission perm = new JndiPermission(prefix, JndiPermission.LOOKUP);
@@ -424,7 +431,7 @@ public class NamingServer
          else
          {
 //            System.out.println("lookup "+name);
-            SecurityManager sm = System.getSecurityManager();
+            SecurityManager sm = getSecurityManager();
             Name fullName = (Name)(prefix.clone());
             fullName.addAll(name);
             if(sm != null)
@@ -452,7 +459,7 @@ public class NamingServer
    {
       if (name.isEmpty())
       {
-         SecurityManager sm = System.getSecurityManager();
+         SecurityManager sm = getSecurityManager();
          if(sm != null)
          {
             JndiPermission perm = new JndiPermission(prefix, JndiPermission.LIST);
@@ -501,7 +508,7 @@ public class NamingServer
    {
       if (name.isEmpty())
       {
-         SecurityManager sm = System.getSecurityManager();
+         SecurityManager sm = getSecurityManager();
          if(sm != null)
          {
             JndiPermission perm = new JndiPermission(prefix, JndiPermission.LIST_BINDINGS);
@@ -618,7 +625,7 @@ public class NamingServer
          {
             Name fullName = (Name) prefix.clone();
             fullName.addAll(name);
-            SecurityManager sm = System.getSecurityManager();
+            SecurityManager sm = getSecurityManager();
             if(sm != null)
             {
                JndiPermission perm = new JndiPermission(fullName, JndiPermission.CREATE_SUBCONTEXT);
@@ -782,5 +789,11 @@ public class NamingServer
    {
       return table.remove(name.get(0));
    }
-   
+
+   private SecurityManager getSecurityManager()
+   {
+      if(secMgr == null)
+         secMgr = System.getSecurityManager();
+      return secMgr;
+   }
 }

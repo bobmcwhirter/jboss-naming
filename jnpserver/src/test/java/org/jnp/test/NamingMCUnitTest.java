@@ -23,15 +23,24 @@ package org.jnp.test;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.security.Permission;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.spi.InitialContextFactory;
 
 import junit.framework.Test;
 
 import org.jboss.beans.metadata.api.annotations.Inject;
+import org.jboss.beans.metadata.api.model.InjectOption;
+import org.jboss.naming.JndiPermission;
 import org.jboss.test.kernel.junit.MicrocontainerTest;
+import org.jnp.interfaces.NamingContext;
 import org.jnp.interfaces.TimedSocketFactory;
+import org.jnp.test.support.QueueSecurityManager;
 
 /**
  * Test bootstraping the naming service using the mc
@@ -47,6 +56,8 @@ public class NamingMCUnitTest extends MicrocontainerTest
    }
    /** */
    private InitialContext ctx;
+   private QueueSecurityManager qsm;
+   private InitialContextFactory ctxFactory;
 
    /**
     * 
@@ -68,6 +79,16 @@ public class NamingMCUnitTest extends MicrocontainerTest
    public void setInitialContext(InitialContext ctx)
    {
       this.ctx = ctx;
+   }
+   @Inject(bean="QueueSecurityManager", option=InjectOption.OPTIONAL)
+   public void setQueueSecurityManager(QueueSecurityManager qsm)
+   {
+      this.qsm = qsm;
+   }
+   @Inject(bean="InitialContextFactory#3", option=InjectOption.OPTIONAL)
+   public void setCtxFactory(InitialContextFactory ctxFactory)
+   {
+      this.ctxFactory = ctxFactory;
    }
 
    /**
@@ -147,6 +168,95 @@ public class NamingMCUnitTest extends MicrocontainerTest
       env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "1000");
       InitialContext ic = new InitialContext(env);
       validateCtx(ic);
+   }
+
+   /**
+    * Test two Naming instances with one LocalOnlyContextFactory using
+    * the NamingContext.local instance, and the other using the non-global
+    * Naming instance that was injected.
+    * @throws Exception
+    */
+   public void testMultipleLocalOnlyContextFactory()
+      throws Exception
+   {
+      // The InitialContextFactory
+      assertNotNull(ctx);
+      validateCtx(ctx);
+
+      // The InitialContextFactory#2
+      Properties env = new Properties();
+      env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory");
+      env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
+      env.setProperty(NamingContext.JNP_NAMING_INSTANCE_NAME, "testLocaNamingBeanImpl#2");
+      InitialContext ic = new InitialContext(env);
+
+      // Validate the second naming context bindings created by JndiBindings#2
+      Integer i2 = (Integer) ic.lookup("ints/2");
+      assertEquals("ints/1", new Integer(2), i2);
+      String s2 = (String) ic.lookup("strings/2");
+      assertEquals("strings/2", "String2", s2);
+      BigInteger bi2 = (BigInteger) ic.lookup("bigint/2");
+      assertEquals("bigint/2", new BigInteger("987654321"), bi2);
+      Properties envp = (Properties) ic.lookup("env-props");
+      Properties expected = new Properties();
+      expected.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory#2");
+      expected.setProperty("java.naming.factory.url", "factory#2");
+      assertEquals("env-props", expected, envp);
+
+      // The InitialContextFactory#3
+      assertNotNull(ctxFactory);
+      // Validate the third naming context bindings created by JndiBindings#3
+      Context ctx3 = ctxFactory.getInitialContext(null);
+      Integer i3 = (Integer) ctx3.lookup("ints/3");
+      assertEquals("ints/1", new Integer(3), i3);
+      String s3 = (String) ctx3.lookup("strings/3");
+      assertEquals("strings/3", "String3", s3);
+      BigInteger bi3 = (BigInteger) ctx3.lookup("bigint/3");
+      assertEquals("bigint/2", new BigInteger("333333333"), bi3);
+      Properties envp3 = (Properties) ctx3.lookup("env-props");
+      Properties expected3 = new Properties();
+      expected3.setProperty("java.naming.factory.initial", "org.jnp.interfaces.LocalOnlyContextFactory#3");
+      expected3.setProperty("java.naming.factory.url", "factory#3");
+      assertEquals("env-props", expected3, envp3);
+   }
+
+   public void testInjectedSecurityManager()
+      throws Exception
+   {
+      qsm.clearPerms();
+
+      HashSet<JndiPermission> expectedPerms = new HashSet<JndiPermission>();
+      // expected doOps() permissions
+      expectedPerms.add(new JndiPermission("path1", "createSubcontext"));
+      expectedPerms.add(new JndiPermission("path1", "lookup"));
+      expectedPerms.add(new JndiPermission("path1", "list"));
+      expectedPerms.add(new JndiPermission("path1", "listBindings"));
+      expectedPerms.add(new JndiPermission("path1/x", "bind"));
+      expectedPerms.add(new JndiPermission("path1/x", "rebind"));
+      expectedPerms.add(new JndiPermission("path1/x", "unbind"));
+      expectedPerms.add(new JndiPermission("path1", "unbind"));
+      SecurityUtil.doOps(ctx);
+      // expected doBadOps() permissions
+      expectedPerms.add(new JndiPermission("path2", "createSubcontext"));
+      expectedPerms.add(new JndiPermission("path1x", "createSubcontext"));
+      expectedPerms.add(new JndiPermission("path1x", "rebind"));
+      expectedPerms.add(new JndiPermission("path1x", "lookup"));
+      expectedPerms.add(new JndiPermission("path1x", "list"));
+      expectedPerms.add(new JndiPermission("path1x", "listBindings"));
+      expectedPerms.add(new JndiPermission("path1x/x", "bind"));
+      expectedPerms.add(new JndiPermission("path1x/x", "rebind"));
+      expectedPerms.add(new JndiPermission("path1x", "unbind"));
+      SecurityUtil.doBadOps(ctx, false);
+
+      List<Permission> perms = qsm.getPerms();
+      for(Permission p : perms)
+      {
+         if(p instanceof JndiPermission)
+         {
+            System.out.println(p);
+            assertTrue(p+" is in expectedPerms", expectedPerms.contains(p));
+         }
+      }
    }
 
    /**

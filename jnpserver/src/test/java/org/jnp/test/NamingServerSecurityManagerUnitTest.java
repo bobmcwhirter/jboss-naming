@@ -24,13 +24,11 @@ package org.jnp.test;
 import java.io.FilePermission;
 import java.io.SerializablePermission;
 import java.lang.reflect.ReflectPermission;
-import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 
-import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import junit.framework.TestCase;
@@ -167,108 +165,14 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
       doBadOps(false);  
    }
 
-   /**
-    * Naming ops that should succeed.
-    * @throws Exception
-    */
    protected void doOps()
       throws Exception
    {
-      ic.createSubcontext("path1");
-      Object p1 = ic.lookup("path1");
-      ic.list("path1");
-      ic.listBindings("path1");
-      ic.bind("path1/x", "x.bind");
-      ic.rebind("path1/x", "x.rebind");
-      ic.unbind("path1/x");
-      ic.unbind("path1");
+      SecurityUtil.doOps(ic);
    }
-   /**
-    * Naming ops that should fail.
-    * @throws Exception
-    */
    protected void doBadOps(boolean expectFailure)
       throws Exception
    {
-      try
-      {
-         ic.createSubcontext("path2");
-         if(expectFailure)
-            fail("Was able to create path2 subcontext");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-      Context path1x = ic.createSubcontext("path1x");
-      try
-      {
-         if(expectFailure)
-         {
-            ic.rebind("path1x", "path1x.rebind");
-            fail("Was able to rebind path1x subcontext");
-         }
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-      
-      try
-      {
-         ic.lookup("path1x");
-         if(expectFailure)
-            fail("Was able to lookup path1x subcontext");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-
-      try
-      {
-         ic.list("path1x");
-         if(expectFailure)
-            fail("Was able to list path1x subcontext");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-
-      try
-      {
-         ic.listBindings("path1x");
-         if(expectFailure)
-            fail("Was able to listBindings path1x subcontext");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-
-      try
-      {
-         ic.bind("path1x/x", "x.bind");
-         if(expectFailure)
-            fail("Was able to bind path1x/x");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-
-      try
-      {
-         ic.rebind("path1x/x", "x.rebind");
-         if(expectFailure)
-            fail("Was able to rebind path1x/x");
-      }
-      catch(AccessControlException e)
-      {
-         System.out.println(e);
-      }
-
-      ic.unbind("path1x");
+      SecurityUtil.doBadOps(ic, expectFailure);
    }
 }

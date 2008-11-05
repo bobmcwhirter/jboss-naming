@@ -54,6 +54,8 @@ public class NamingBeanImpl
    protected boolean UseGlobalService = true;
    /** The plugin for the manager which dispatches EventContext events to listeners */
    private EventMgr eventMgr;
+   /** The SecurityManager */
+   private SecurityManager securityMgr;
 
    // Static --------------------------------------------------------
    public static void main(String[] args)
@@ -99,6 +101,15 @@ public class NamingBeanImpl
       this.eventMgr = eventMgr;
    }
 
+   public SecurityManager getSecurityMgr()
+   {
+      return securityMgr;
+   }
+   public void setSecurityMgr(SecurityManager securityMgr)
+   {
+      this.securityMgr = securityMgr;
+   }
+
    /**
     * Util method for possible override.
     *
@@ -107,7 +118,7 @@ public class NamingBeanImpl
     */
    protected Naming createServer() throws Exception
    {
-      return new NamingServer(null, null, eventMgr);
+      return new NamingServer(null, null, eventMgr, securityMgr);
    }
 
    /**

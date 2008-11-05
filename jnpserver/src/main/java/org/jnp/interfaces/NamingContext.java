@@ -149,6 +149,14 @@ public class NamingContext
     * will be made.
     */ 
    public static final String JNP_MAX_RETRIES = "jnp.maxRetries";
+   /**
+    * The Naming instance to use for the root Context creation
+    */ 
+   public static final String JNP_NAMING_INSTANCE = "jnp.namingInstance";
+   /**
+    * The name to associate with Naming instance to use for the root Context
+    */ 
+   public static final String JNP_NAMING_INSTANCE_NAME = "jnp.namingInstanceName";
 
    /**
     * The default discovery multicast information
@@ -290,12 +298,16 @@ public class NamingContext
       }
       catch (IOException e)
       {
+         if(log.isTraceEnabled())
+            log.trace("Failed to retrieve stub from server " + hostKey, e);
          NamingException ex = new CommunicationException("Failed to retrieve stub from server " + hostKey);
          ex.setRootCause(e);
          throw ex;
       }
       catch (Exception e)
       {
+         if(log.isTraceEnabled())
+            log.trace("Failed to connect server " + hostKey, e);
          NamingException ex = new CommunicationException("Failed to connect to server " + hostKey);
          ex.setRootCause(e);
          throw ex;
