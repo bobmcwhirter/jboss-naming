@@ -10,7 +10,7 @@
   <groupId>org.jboss.naming</groupId>
   <artifactId>jnp-client</artifactId>
   <name>JBoss Naming Client</name>
-  <version>5.0.0-SNAPSHOT</version>
+  <version>5.1.0-SNAPSHOT</version>
   <description>The JBoss Naming Client</description>
   <url>http://www.jboss.org</url>
   <build>
