@@ -1,5 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>jnpclient</name>
-	<comment>The client client</comment>
+  <name>jnp-client</name>
+  <comment>The JBoss Naming Client</comment>
+  <projects/>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
 </projectDescription>
