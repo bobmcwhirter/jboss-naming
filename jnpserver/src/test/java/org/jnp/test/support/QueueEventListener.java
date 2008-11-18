@@ -30,6 +30,8 @@ import javax.naming.event.NamingEvent;
 import javax.naming.event.NamingExceptionEvent;
 import javax.naming.event.ObjectChangeListener;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Scott.Stark@jboss.org
  * @version $Revision:$
@@ -37,8 +39,10 @@ import javax.naming.event.ObjectChangeListener;
 public class QueueEventListener implements ObjectChangeListener,
       NamespaceChangeListener
 {
+   private static final Logger log = Logger.getLogger(QueueEventListener.class);
    private ArrayList<NamingEvent> events = new ArrayList<NamingEvent>();
    private Semaphore eventCount = new Semaphore(0);
+   @SuppressWarnings("unused")
    private NamingExceptionEvent ex;
 
    public boolean waitOnEvent() throws InterruptedException
@@ -52,10 +56,10 @@ public class QueueEventListener implements ObjectChangeListener,
 
    public void objectChanged(NamingEvent evt)
    {
-      System.out.println("Begin objectChanged, "+evt);
+      log.info("Begin objectChanged, "+evt);
       events.add(evt);
       eventCount.release();
-      System.out.println("End objectChanged, "+evt);
+      log.info("End objectChanged, "+evt);
    }
 
    public void namingExceptionThrown(NamingExceptionEvent evt)
@@ -65,10 +69,10 @@ public class QueueEventListener implements ObjectChangeListener,
 
    public void objectAdded(NamingEvent evt)
    {
-      System.out.println("Begin objectAdded, "+evt);
+      log.info("Begin objectAdded, "+evt);
       events.add(evt);
       eventCount.release();
-      System.out.println("End objectAdded, "+evt);
+      log.info("End objectAdded, "+evt);
    }
 
    public void objectRemoved(NamingEvent evt)

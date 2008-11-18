@@ -40,7 +40,7 @@ public class NamingTestSuite extends TestSuite
 
    public static Test suite()
    {
-      TestSuite suite = new TestSuite("Controller Tests");
+      TestSuite suite = new TestSuite("Naming Tests");
 
       suite.addTest(JndiPermissionUnitTest.suite());
       suite.addTest(NamingEventsUnitTest.suite());

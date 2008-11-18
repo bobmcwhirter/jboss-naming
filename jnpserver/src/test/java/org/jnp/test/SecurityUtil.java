@@ -88,9 +88,9 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to lookup path1x subcontext");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
 
       try

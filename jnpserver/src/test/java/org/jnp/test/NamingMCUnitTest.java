@@ -253,7 +253,7 @@ public class NamingMCUnitTest extends MicrocontainerTest
       {
          if(p instanceof JndiPermission)
          {
-            System.out.println(p);
+            getLog().info(p);
             assertTrue(p+" is in expectedPerms", expectedPerms.contains(p));
          }
       }

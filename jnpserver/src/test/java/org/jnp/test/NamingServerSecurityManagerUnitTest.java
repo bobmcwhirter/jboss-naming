@@ -66,7 +66,7 @@ public class NamingServerSecurityManagerUnitTest extends BaseTestCase
    protected void setUp() throws Exception
    {
       super.setUp();
-      System.out.println("+++ setUp, creating NamingBean");
+      getLog().info("+++ setUp, creating NamingBean");
       namingBean = new NamingBeanImpl();
       namingBean.setInstallGlobalService(true);
       namingBean.setUseGlobalService(false);
@@ -124,7 +124,7 @@ public class NamingServerSecurityManagerUnitTest extends BaseTestCase
       {
          if(p instanceof JndiPermission)
          {
-            System.out.println(p);
+            getLog().info(p);
             assertTrue(p+" is in expectedPerms", expectedPerms.contains(p));
          }
       }

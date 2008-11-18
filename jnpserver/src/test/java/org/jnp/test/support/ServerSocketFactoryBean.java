@@ -26,12 +26,15 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.rmi.server.RMIServerSocketFactory;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Scott.Stark@jboss.org
  * @version $Revision:$
  */
 public class ServerSocketFactoryBean implements RMIServerSocketFactory
 {
+   private static final Logger log = Logger.getLogger(ServerSocketFactoryBean.class);
    private InetAddress rmiBindAddress;
    private int backlog = 0;
    
@@ -59,7 +62,7 @@ public class ServerSocketFactoryBean implements RMIServerSocketFactory
 
    public ServerSocket createServerSocket(int port) throws IOException
    {
-      System.out.println("ServerSocketFactoryBean, createServerSocket port: "+port+", bindAddr: "+rmiBindAddress);
+      log.info("ServerSocketFactoryBean, createServerSocket port: "+port+", bindAddr: "+rmiBindAddress);
       ServerSocket ss = new ServerSocket(port, backlog, rmiBindAddress);
       return ss;
    }

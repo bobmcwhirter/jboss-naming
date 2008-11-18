@@ -25,12 +25,15 @@ import java.security.Permission;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Scott.Stark@jboss.org
  * @version $Revision$
  */
 public class TestSecurityManager extends SecurityManager
 {
+   private static final Logger log = Logger.getLogger(TestSecurityManager.class);
    /** The set of allowed test permissions */
    HashSet<Permission> testPermissions = new HashSet<Permission>();
 
@@ -54,7 +57,7 @@ public class TestSecurityManager extends SecurityManager
          if(p.implies(perm))
             return;
       }
-      System.out.println("checkPermission, "+perm);
+      log.info("checkPermission, "+perm);
       super.checkPermission(perm);
    }
 }

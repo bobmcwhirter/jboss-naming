@@ -26,6 +26,8 @@ import java.io.Serializable;
 import java.net.Socket;
 import java.rmi.server.RMIClientSocketFactory;
 
+import org.jboss.logging.Logger;
+
 /**
  * @author Scott.Stark@jboss.org
  * @version $Revision:$
@@ -33,11 +35,12 @@ import java.rmi.server.RMIClientSocketFactory;
 public class ClientSocketFactoryBean
    implements RMIClientSocketFactory, Serializable
 {
+   private static final Logger log = Logger.getLogger(ClientSocketFactoryBean.class);
    private static final long serialVersionUID = 1;
 
    public Socket createSocket(String host, int port) throws IOException
    {
-      System.out.println("ClientSocketFactoryBean, createSocket host:"+host+", port:"+port);
+      log.info("ClientSocketFactoryBean, createSocket host:"+host+", port:"+port);
       Socket s = new Socket(host, port);
       s.setSoTimeout(5000);
       return s;
