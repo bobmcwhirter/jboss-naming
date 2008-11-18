@@ -29,30 +29,39 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.event.EventContext;
 import javax.naming.event.NamingEvent;
-import javax.naming.event.NamingListener;
 
+import junit.framework.Test;
+
+import org.jboss.test.BaseTestCase;
 import org.jnp.interfaces.MarshalledValuePair;
 import org.jnp.server.ExecutorEventMgr;
 import org.jnp.server.NamingBeanImpl;
-import org.jnp.test.TestJNPSockets.ClientSocketFactory;
-import org.jnp.test.TestJNPSockets.ServerSocketFactory;
 import org.jnp.test.support.QueueEventListener;
-
-import junit.framework.TestCase;
 
 /**
  * @author Scott.Stark@jboss.org
  * @version $Revision:$
  */
-public class NamingEventsUnitTest extends TestCase
+public class NamingEventsUnitTest extends BaseTestCase
 {
    /** The actual namingMain service impl bean */
    private static NamingBeanImpl namingBean;
    private QueueEventListener listener = new QueueEventListener();
+   
+   public static Test suite()
+   {
+      return suite(NamingEventsUnitTest.class);
+   }
+   
+   public NamingEventsUnitTest(String name)
+   {
+      super(name);
+   }
 
    @Override
    protected void setUp() throws Exception
    {
+      super.setUp();
       namingBean = new NamingBeanImpl();
       namingBean.setInstallGlobalService(true);
       namingBean.setEventMgr(new ExecutorEventMgr());

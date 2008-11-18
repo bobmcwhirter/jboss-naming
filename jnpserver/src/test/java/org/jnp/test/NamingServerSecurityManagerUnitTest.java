@@ -31,9 +31,10 @@ import java.util.Properties;
 
 import javax.naming.InitialContext;
 
-import junit.framework.TestCase;
+import junit.framework.Test;
 
 import org.jboss.naming.JndiPermission;
+import org.jboss.test.BaseTestCase;
 import org.jnp.server.ExecutorEventMgr;
 import org.jnp.server.NamingBeanImpl;
 import org.jnp.test.support.QueueSecurityManager;
@@ -45,15 +46,26 @@ import org.jnp.test.support.TestSecurityManager;
  * @author Scott.Stark@jboss.org
  * @version $Revision$
  */
-public class NamingServerSecurityManagerUnitTest extends TestCase
+public class NamingServerSecurityManagerUnitTest extends BaseTestCase
 {
    /** The actual namingMain service impl bean */
    private NamingBeanImpl namingBean;
    private InitialContext ic;
+   
+   public static Test suite()
+   {
+      return suite(NamingServerSecurityManagerUnitTest.class);
+   }
+   
+   public NamingServerSecurityManagerUnitTest(String name)
+   {
+      super(name);
+   }
 
    @Override
    protected void setUp() throws Exception
    {
+      super.setUp();
       System.out.println("+++ setUp, creating NamingBean");
       namingBean = new NamingBeanImpl();
       namingBean.setInstallGlobalService(true);
@@ -67,9 +79,10 @@ public class NamingServerSecurityManagerUnitTest extends TestCase
       env.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");
       ic = new InitialContext(env);
    }
-   protected void tearDown()
+   protected void tearDown() throws Exception
    {
       System.setSecurityManager(null);
+      super.tearDown();
    }
 
    /**

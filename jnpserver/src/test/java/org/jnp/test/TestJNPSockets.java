@@ -23,18 +23,19 @@ package org.jnp.test;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.util.Properties;
+
 import javax.naming.InitialContext;
 
-import junit.framework.TestSuite;
-import junit.framework.TestCase;
+import junit.framework.Test;
 
+import org.jboss.logging.Logger;
+import org.jboss.test.BaseTestCase;
 import org.jnp.server.Main;
-import org.jnp.server.NamingBean;
 import org.jnp.server.NamingBeanImpl;
 
 /** A test of RMI custom sockets with the jnp JNDI provider.
@@ -42,14 +43,21 @@ import org.jnp.server.NamingBeanImpl;
  @author Scott.Stark@jboss.org
  @version $Revision:70105 $
  */
-public class TestJNPSockets extends TestCase
+public class TestJNPSockets extends BaseTestCase
 {
+   private static final Logger log = Logger.getLogger(TestJNPSockets.class);
+   
    /** The actual namingMain service impl bean */
    private static NamingBeanImpl namingBean;
    /** */
    private static Main namingMain = new Main("org.jnp.server");
 
    static int serverPort;
+   
+   public static Test suite()
+   {
+      return suite(TestJNPSockets.class);
+   }
 
    public TestJNPSockets(String name)
    {
@@ -58,6 +66,7 @@ public class TestJNPSockets extends TestCase
 
    protected void setUp() throws Exception
    {
+      super.setUp();
       if (namingBean != null)
          return;
 
@@ -79,7 +88,7 @@ public class TestJNPSockets extends TestCase
       env.setProperty("java.naming.provider.url", "localhost:" + serverPort);
       env.setProperty("java.naming.factory.url.pkgs", "org.jnp.interfaces");
       InitialContext ctx = new InitialContext(env);
-      System.out.println("Connected to jnp service");
+      log.info("Connected to jnp service");
       ctx.list("");
       ctx.close();
       if (ClientSocketFactory.created == false)
@@ -91,8 +100,7 @@ public class TestJNPSockets extends TestCase
 
    public static void main(String[] args) throws Exception
    {
-      System.setErr(System.out);
-      TestSuite suite = new TestSuite(TestJNPSockets.class);
+      Test suite = suite();
       junit.textui.TestRunner.run(suite);
    }
 
@@ -105,7 +113,7 @@ public class TestJNPSockets extends TestCase
       public Socket createSocket(String host, int port) throws IOException
       {
          Socket clientSocket = new Socket(host, port);
-         System.out.println("createSocket -> " + clientSocket);
+         log.info("createSocket -> " + clientSocket);
          created = true;
          return clientSocket;
       }
@@ -120,7 +128,7 @@ public class TestJNPSockets extends TestCase
       public ServerSocket createServerSocket(int port) throws IOException
       {
          ServerSocket serverSocket = new ServerSocket(port);
-         System.out.println("createServerSocket -> " + serverSocket);
+         log.info("createServerSocket -> " + serverSocket);
          created = true;
          return serverSocket;
       }

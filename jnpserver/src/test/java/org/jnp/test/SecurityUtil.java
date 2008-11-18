@@ -23,8 +23,9 @@ package org.jnp.test;
 
 import java.security.AccessControlException;
 
-import javax.naming.Context;
 import javax.naming.InitialContext;
+
+import org.jboss.test.AbstractTestCase;
 
 import junit.framework.AssertionFailedError;
 
@@ -42,7 +43,7 @@ public class SecurityUtil
       throws Exception
    {
       ic.createSubcontext("path1");
-      Object p1 = ic.lookup("path1");
+      ic.lookup("path1");
       ic.list("path1");
       ic.listBindings("path1");
       ic.bind("path1/x", "x.bind");
@@ -63,11 +64,11 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to create path2 subcontext");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
-      Context path1x = ic.createSubcontext("path1x");
+      ic.createSubcontext("path1x");
       try
       {
          if(expectFailure)
@@ -76,9 +77,9 @@ public class SecurityUtil
             fail("Was able to rebind path1x subcontext");
          }
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
       
       try
@@ -98,9 +99,9 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to list path1x subcontext");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
 
       try
@@ -109,9 +110,9 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to listBindings path1x subcontext");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
 
       try
@@ -120,9 +121,9 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to bind path1x/x");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
 
       try
@@ -131,9 +132,9 @@ public class SecurityUtil
          if(expectFailure)
             fail("Was able to rebind path1x/x");
       }
-      catch(AccessControlException e)
+      catch(Exception e)
       {
-         System.out.println(e);
+         AbstractTestCase.checkThrowable(AccessControlException.class, e);
       }
 
       ic.unbind("path1x");

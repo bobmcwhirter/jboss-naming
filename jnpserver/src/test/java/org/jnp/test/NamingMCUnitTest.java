@@ -71,7 +71,7 @@ public class NamingMCUnitTest extends MicrocontainerTest
    /**
     * Obtain the InitialContext from the InitialContextFactory bean ctx property.
     * Each test expects an InitialContextFactory bean
-    * @see org.jboss.naming.InitialContextFactory
+    * @see org.jboss.naming.NamingContextFactory
     * 
     * @param ctx
     */

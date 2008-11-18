@@ -30,6 +30,8 @@ import java.util.HashSet;
 import javax.naming.CompositeName;
 import javax.naming.Name;
 
+import junit.framework.Test;
+
 import org.jboss.naming.JndiPermission;
 import org.jboss.test.BaseTestCase;
 
@@ -69,6 +71,11 @@ public class JndiPermissionUnitTest extends BaseTestCase
          comma = true;
       }
       ALL_ACTIONS = builder.toString();
+   }
+   
+   public static Test suite()
+   {
+      return suite(JndiPermissionUnitTest.class);
    }
    
    public JndiPermissionUnitTest(String name)
