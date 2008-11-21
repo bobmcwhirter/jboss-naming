@@ -33,6 +33,24 @@
           </descriptors>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rmic-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>rmi-compile</id>
+            <goals>
+              <goal>rmic</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <includes>
+                <include>org/jnp/server/NamingServer.class</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
    

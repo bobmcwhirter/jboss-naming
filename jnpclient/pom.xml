@@ -30,6 +30,7 @@
                 <jar jarfile="${basedir}/target/jnp-client-${project.version}.jar" update="true" manifest="${basedir}/../jnpserver/src/etc/default.mf">
                   <fileset dir="${basedir}/../jnpserver/target/classes">
                     <include name="org/jnp/interfaces/**" />
+                    <include name="org/jnp/server/NamingServer_Stub.class" />
                     <include name="org/jboss/naming/**" />
                   </fileset>
                   <fileset file="${basedir}/../JBossORG-EULA.txt" />
