@@ -15,12 +15,17 @@
   <url>http://www.jboss.org</url>
   <description>The JBoss JNDI Server</description>
   <scm>
-     <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/branches/Branch_5_0</connection>
+     <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
   </scm>
   <!-- Properties -->
   <properties>
-    <version.org.jboss.common.core>2.2.8.GA</version.org.jboss.common.core>
-    <version.org.jboss.microcontainer>2.0.0.CR2</version.org.jboss.microcontainer>
+    <!-- compile dependencies -->
+    <version.org.jboss.logging.spi>2.0.5.GA</version.org.jboss.logging.spi>
+    <version.org.jboss.common.core>2.2.10.GA</version.org.jboss.common.core>
+    <!-- testing dependencies -->
+    <version.org.jboss.microcontainer>2.0.0.CR5</version.org.jboss.microcontainer>
+    <version.org.jboss.test>1.1.1.GA</version.org.jboss.test>
+    <version.junit>3.8.2</version.junit>
   </properties>
 
   <build>
@@ -55,6 +60,7 @@
   </build>
    
   <dependencies>
+    <!-- compile dependencies -->
     <dependency>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-common-core</artifactId>
@@ -64,32 +70,30 @@
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging-spi</artifactId>
-      <version>2.0.5.GA</version>
+      <version>${version.org.jboss.logging.spi}</version>
     </dependency>
 
+    <!-- test dependencing -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>${version.junit}</version>
       <scope>test</scope>
     </dependency>
+    
     <dependency>
       <groupId>org.jboss.microcontainer</groupId>
       <artifactId>jboss-kernel</artifactId>
       <version>${version.org.jboss.microcontainer}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.jboss.man</groupId>
-      <artifactId>jboss-managed</artifactId>
-      <version>2.0.0.CR1</version>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.jboss.test</groupId>
       <artifactId>jboss-test</artifactId>
-      <version>1.1.1.GA</version>
+      <version>${version.org.jboss.test}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
 </project>

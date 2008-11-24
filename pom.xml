@@ -21,11 +21,9 @@
   <packaging>pom</packaging>
   <name>JBoss Naming Build</name>
   <url>http://www.jboss.com/products/jbossmc</url>
-  <description>
-    The JBoss JNDI name server implementation.
-  </description>
+  <description>The JBoss JNDI name server implementation</description>
   <scm>
-    <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/branches/Branch_5_0</connection>
+    <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
   </scm>
 
   <modules>
