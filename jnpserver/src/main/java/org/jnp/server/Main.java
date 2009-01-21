@@ -35,6 +35,8 @@ import java.rmi.Remote;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -83,6 +85,7 @@ public class Main implements MainMBean
     * multi-homed hosts that want control over which interfaces accept
     * connections */
    protected InetAddress bindAddress;
+   protected List<InetAddress> bindAddresses;
    /** The interface to bind to for the Naming RMI server */ 
    protected InetAddress rmiBindAddress;
    /** Should the java.rmi.server.hostname property to rmiBindAddress */
@@ -233,6 +236,16 @@ public class Main implements MainMBean
          bindAddress = null;
       else
          bindAddress = InetAddress.getByName(host);
+   }
+
+   
+   public List<InetAddress> getBindAddresses()
+   {
+      return bindAddresses;
+   }
+   public void setBindAddresses(List<InetAddress> bindAddresses)
+   {
+      this.bindAddresses = bindAddresses;
    }
 
    public String getRmiBindAddress()
@@ -436,38 +449,48 @@ public class Main implements MainMBean
          // Get the default ServerSocketFactory is one was not specified
          if( jnpServerSocketFactory == null )
             jnpServerSocketFactory = ServerSocketFactory.getDefault();
-         serverSocket = jnpServerSocketFactory.createServerSocket(port, backlog, bindAddress);
-         // If an anonymous port was specified get the actual port used
-         if( port == 0 )
-            port = serverSocket.getLocalPort();
-         String msg = "JNDI bootstrap JNP=" + bindAddress + ":" + port
-            + ", RMI=" + bindAddress + ":" + rmiPort
-            + ", backlog="+backlog;
+         List<InetAddress> addresses = bindAddresses;
+         if(addresses == null)
+            addresses = Collections.singletonList(bindAddress);
+         // Setup the exectuor with addresses + 1 threads
+         if( lookupExector == null  )
+         {
+            int count = addresses.size() + 1;
+            log.debug("Using default newFixedThreadPool("+count+")");
+            lookupExector = Executors.newFixedThreadPool(count, BootstrapThreadFactory.getInstance());
+         }
 
-          if (clientSocketFactory == null)
-            msg+= ", no client SocketFactory";
-          else
-            msg+= ", Client SocketFactory="+clientSocketFactory.toString();
+         for(InetAddress address : addresses)
+         {
+            serverSocket = jnpServerSocketFactory.createServerSocket(port, backlog, address);
+            // If an anonymous port was specified get the actual port used
+            if( port == 0 )
+               port = serverSocket.getLocalPort();
+            String msg = "JNDI bootstrap JNP=" + address + ":" + port
+               + ", RMI=" + address + ":" + rmiPort
+               + ", backlog="+backlog;
+   
+             if (clientSocketFactory == null)
+               msg+= ", no client SocketFactory";
+             else
+               msg+= ", Client SocketFactory="+clientSocketFactory.toString();
+   
+             if (serverSocketFactory == null)
+               msg+= ", no server SocketFactory";
+             else
+               msg+= ", Server SocketFactory="+serverSocketFactory.toString();
+   
+            log.debug(msg);
 
-          if (serverSocketFactory == null)
-            msg+= ", no server SocketFactory";
-          else
-            msg+= ", Server SocketFactory="+serverSocketFactory.toString();
-
-         log.debug(msg);
+            AcceptHandler handler = new AcceptHandler();
+            lookupExector.execute(handler);
+         }
       }
       catch (IOException e)
       {
          log.error("Could not start on port " + port, e);
       }
 
-      if( lookupExector == null  )
-      {
-         log.debug("Using default newFixedThreadPool(2)");
-         lookupExector = Executors.newFixedThreadPool(2, BootstrapThreadFactory.getInstance());
-      }
-      AcceptHandler handler = new AcceptHandler();
-      lookupExector.execute(handler);
    }
 
    /** 

@@ -24,16 +24,15 @@ package org.jnp.interfaces;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.SerializablePermission;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ReflectPermission;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.rmi.ConnectException;
 import java.rmi.MarshalledObject;
 import java.rmi.NoSuchObjectException;
@@ -45,10 +44,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
 import javax.naming.CommunicationException;
@@ -176,7 +176,7 @@ public class NamingContext
 
    // Static --------------------------------------------------------
    /** HAJNDI keyed by partition name */
-   private static Hashtable haServers = new Hashtable();
+   private static Hashtable<String, Naming> haServers = new Hashtable<String, Naming>();
    private static RuntimePermission GET_HA_NAMING_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.getHANamingServerForPartition");
    private static RuntimePermission SET_HA_NAMING_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.setHANamingServerForPartition");
    public static void setHANamingServerForPartition(String partitionName, Naming haServer)
@@ -212,6 +212,8 @@ public class NamingContext
    private static Naming localServer;
    private static RuntimePermission GET_LOCAL_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.getLocal");
    private static RuntimePermission SET_LOCAL_SERVER = new RuntimePermission("org.jboss.naming.NamingContext.setLocal");
+   private static int HOST_INDEX = 0;
+   private static int PORT_INDEX = 1;
 
    // Attributes ----------------------------------------------------
    Naming naming;
@@ -228,14 +230,30 @@ public class NamingContext
    // calls, which will improve performance.
    // Weak references are used so if no contexts use a particular server
    // it will be removed from the cache.
-   static HashMap cachedServers = new HashMap();
+   static ConcurrentHashMap<InetSocketAddress, WeakReference<Naming>> cachedServers
+      = new ConcurrentHashMap<InetSocketAddress, WeakReference<Naming>>();
 
+   /**
+    * @deprecated use {@link #addServer(InetSocketAddress, Naming)}
+    * @param name
+    * @param server
+    */
    static void addServer(String name, Naming server)
+   {
+      Object[] hostAndPort = {name, 0};
+      parseHostPort(name, hostAndPort, 0);
+      String host = (String) hostAndPort[HOST_INDEX];
+      Integer port = (Integer) hostAndPort[PORT_INDEX];
+      InetSocketAddress addr = new InetSocketAddress(host, port);
+      addServer(addr, server);
+   }
+   static void addServer(InetSocketAddress addr, Naming server)
    {
       // Add server to map
       synchronized (NamingContext.class)
       {
-         cachedServers.put(name, new WeakReference(server));
+         WeakReference<Naming> ref = new WeakReference<Naming>(server);
+         cachedServers.put(addr, ref);
       }
    }
 
@@ -243,8 +261,8 @@ public class NamingContext
       throws NamingException
    {
       // Check the server cache for a host:port entry
-      String hostKey = host + ":" + port;
-      WeakReference ref = (WeakReference) cachedServers.get(hostKey);
+      InetSocketAddress key = new InetSocketAddress(host, port);
+      WeakReference<Naming> ref = cachedServers.get(key);
       Naming server;
       if (ref != null)
       {
@@ -253,7 +271,7 @@ public class NamingContext
          {
             // JBAS-4622. Ensure the env for the request has the
             // hostKey so we can remove the cache entry if there is a failure
-            serverEnv.put("hostKey", hostKey);
+            serverEnv.put("hostKey", key);
             return server;
          }
       }
@@ -278,7 +296,7 @@ public class NamingContext
          }
          catch (IOException e)
          {
-            NamingException ex = new ServiceUnavailableException("Failed to connect to server " + hostKey);
+            NamingException ex = new ServiceUnavailableException("Failed to connect to server " + key);
             ex.setRootCause(e);
             throw ex;
          }
@@ -291,24 +309,24 @@ public class NamingContext
          s.close();
 
          // Add it to cache
-         addServer(hostKey, server);
-         serverEnv.put("hostKey", hostKey);
+         addServer(key, server);
+         serverEnv.put("hostKey", key);
 
          return server;
       }
       catch (IOException e)
       {
          if(log.isTraceEnabled())
-            log.trace("Failed to retrieve stub from server " + hostKey, e);
-         NamingException ex = new CommunicationException("Failed to retrieve stub from server " + hostKey);
+            log.trace("Failed to retrieve stub from server " + key, e);
+         NamingException ex = new CommunicationException("Failed to retrieve stub from server " + key);
          ex.setRootCause(e);
          throw ex;
       }
       catch (Exception e)
       {
          if(log.isTraceEnabled())
-            log.trace("Failed to connect server " + hostKey, e);
-         NamingException ex = new CommunicationException("Failed to connect to server " + hostKey);
+            log.trace("Failed to connect server " + key, e);
+         NamingException ex = new CommunicationException("Failed to connect to server " + key);
          ex.setRootCause(e);
          throw ex;
       }
@@ -376,28 +394,17 @@ public class NamingContext
                String server = parseNameForScheme(urlAsName, null);
                if (server != null)
                   url = server;
-               int colon = url.indexOf(':');
-               if (colon < 0)
-               {
-                  host = url.trim();
-               }
-               else
-               {
-                  host = url.substring(0, colon).trim();
-                  try
-                  {
-                     port = Integer.parseInt(url.substring(colon + 1).trim());
-                  }
-                  catch (Exception ex)
-                  {
-                     // Use default;
-                  }
-               }
+               
+               Object[] hostAndPort = {url, 1099};
+               parseHostPort(url, hostAndPort, 1099);
+               host = (String) hostAndPort[HOST_INDEX];
+               port = (Integer) hostAndPort[PORT_INDEX];
 
                // Remove server from map
                synchronized (NamingContext.class)
                {
-                  cachedServers.remove(host + ":" + port);
+                  InetSocketAddress key = new InetSocketAddress(host, port);
+                  cachedServers.remove(key);
                }
             }
             catch (NamingException ignored)
@@ -1614,11 +1621,12 @@ public class NamingContext
          String serverHost;
          int serverPort;
 
-         int colon = myServer.indexOf(':');
-         if (colon >= 0)
+         Object[] hostAndPort = {myServer, 0};
+         parseHostPort(myServer, hostAndPort, DEFAULT_DISCOVERY_GROUP_PORT);
+         serverHost = (String) hostAndPort[HOST_INDEX];
+         serverPort = (Integer) hostAndPort[PORT_INDEX];
+         if (serverHost != null)
          {
-            serverHost = myServer.substring(0, colon);
-            serverPort = Integer.valueOf(myServer.substring(colon + 1)).intValue();
             server = getServer(serverHost, serverPort, serverEnv);
          }
          return server;
@@ -1675,23 +1683,11 @@ public class NamingContext
                String server = parseNameForScheme(urlAsName, null);
                if (server != null)
                   url = server;
-               int colon = url.indexOf(':');
-               if (colon < 0)
-               {
-                  host = url;
-               }
-               else
-               {
-                  host = url.substring(0, colon).trim();
-                  try
-                  {
-                     port = Integer.parseInt(url.substring(colon + 1).trim());
-                  }
-                  catch (Exception ex)
-                  {
-                     // Use default;
-                  }
-               }
+               // 
+               Object[] hostAndPort = {url, 0};
+               parseHostPort(url, hostAndPort, 1099);
+               host = (String) hostAndPort[HOST_INDEX];
+               port = (Integer) hostAndPort[PORT_INDEX];
                try
                {
                   // Get server from cache
@@ -1764,6 +1760,48 @@ public class NamingContext
             }
          }
       }
+   }
+
+   /**
+    * Parse a naming provider url for the host/port information
+    * @param url - the naming provider url string to parse
+    * @param output, [0] = the host name/address, [1] = the parsed port as an Integer
+    * @param defaultPort - the default port to return in output[1] if no port
+    * was seen in the url string.
+    * @return the index of the port separator if found, -1 otherwise.
+    */
+   static private int parseHostPort(String url, Object[] output, int defaultPort)
+   {
+      // First look for a @ separating the host and port
+      int colon = url.indexOf('@');
+      if(colon < 0)
+      {
+         // If there are multiple ':' assume its an IPv6 address
+         colon = url.lastIndexOf(':');
+         int firstColon = url.indexOf(':');
+         if(colon > firstColon)
+            colon = -1;
+      }
+
+      if(colon < 0)
+      {
+         output[HOST_INDEX] = url;
+         output[PORT_INDEX] = new Integer(defaultPort);
+      }
+      else
+      {
+         output[HOST_INDEX] = url.substring(0, colon);  
+         try
+         {
+            output[PORT_INDEX] = Integer.parseInt(url.substring(colon+1).trim());
+         }
+         catch (Exception ex)
+         {
+            // Use default port
+            output[PORT_INDEX] = new Integer(defaultPort);
+         }
+      }
+      return colon;
    }
 
    private Name getAbsoluteName(Name n)
