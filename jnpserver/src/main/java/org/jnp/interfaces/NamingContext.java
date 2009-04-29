@@ -38,6 +38,7 @@ import java.rmi.MarshalledObject;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -84,6 +85,7 @@ import org.jboss.logging.Logger;
  * passed to the
  * @author oberg
  * @author scott.stark@jboss.org
+ * @author Galder Zamarreño
  * @version $Revision$
  */
 public class NamingContext
@@ -158,6 +160,34 @@ public class NamingContext
     */ 
    public static final String JNP_NAMING_INSTANCE_NAME = "jnp.namingInstanceName";
 
+   /**
+    * Global JNP disable discovery system property: -Djboss.global.jnp.disableDiscover=[true|false]
+    * At the VM level, this property controls how disable discovery behaves in 
+    * absence of per context jnp.disableDiscovery property.  
+    */
+   private static final boolean GLOBAL_JNP_DISABLE_DISCOVERY = Boolean.valueOf(getSystemProperty("jboss.global.jnp.disableDiscovery", "false"));
+   
+   public static String getSystemProperty(final String name, final String defaultValue)
+   {
+      String prop;
+      if (System.getSecurityManager() == null)
+      {
+         prop = System.getProperty(name, defaultValue);
+      }
+      else
+      {
+         PrivilegedAction action = new PrivilegedAction()
+         {
+            public Object run()
+            {
+               return System.getProperty(name, defaultValue);
+            }
+         };
+         prop = (String) AccessController.doPrivileged(action);
+      }
+      return prop;      
+   }
+   
    /**
     * The default discovery multicast information
     */
@@ -1349,6 +1379,34 @@ public class NamingContext
       }
       return linkResult;
    }
+   
+   protected boolean shouldDiscoveryHappen(boolean globalDisableDiscovery, String perCtxDisableDiscovery)
+   {
+      boolean trace = log.isTraceEnabled();
+      if (!globalDisableDiscovery)
+      {
+         // No global disable, so act as before.
+         if (Boolean.valueOf(perCtxDisableDiscovery) == Boolean.TRUE)
+         {
+            if (trace)
+               log.trace("Skipping discovery due to disable flag in context");
+            return false;
+         }         
+      }
+      else
+      {
+         // Global disable on but double check whether there's a per context override.
+         // If disableDiscovery in context is explicitly set to false, do discovery.
+         if (perCtxDisableDiscovery == null || Boolean.valueOf(perCtxDisableDiscovery) == Boolean.TRUE)
+         {
+            if (trace)
+               log.trace("Skipping discovery due to disable flag in context, or disable flag globally (and no override in context)");
+            return false;            
+         }
+      }
+      
+      return true;
+   }
 
    // Private -------------------------------------------------------
 
@@ -1482,6 +1540,12 @@ public class NamingContext
       boolean trace = log.isTraceEnabled();
       // Check if discovery should be done
       String disableDiscovery = (String) serverEnv.get(JNP_DISABLE_DISCOVERY);
+      
+      if (!shouldDiscoveryHappen(GLOBAL_JNP_DISABLE_DISCOVERY, disableDiscovery))
+      {
+         return null;
+      }
+      
       if (Boolean.valueOf(disableDiscovery) == Boolean.TRUE)
       {
          if (trace)
