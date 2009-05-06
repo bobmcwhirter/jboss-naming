@@ -65,7 +65,7 @@ public class JNDIBindingUnitTestCase extends BootstrapNamingTest
    public void testOnDemand() throws Exception
    {
       assertNoBinding("Test");
-      KernelDeployment deployment = deploy("Plain.xml");
+      KernelDeployment deployment = deploy("OnDemand.xml");
       try
       {
          getControllerContext("Test", ControllerState.PRE_INSTALL);
