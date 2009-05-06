@@ -20,7 +20,7 @@
     </appender>
     
     <category name="org.jnp">
-        <priority value="TRACE"/>
+        <priority value="DEBUG"/>
     </category>
     
     <root>

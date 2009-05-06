@@ -31,6 +31,11 @@
     <module>jnpclient</module>
   </modules>
 
+  <properties>
+    <version.org.jboss.common.core>2.2.13.GA</version.org.jboss.common.core>
+    <version.org.jboss.microcontainer>2.0.5.GA</version.org.jboss.microcontainer>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -44,6 +49,44 @@
       </plugin>
     </plugins>
   </build>
+
+  <dependencyManagement>
+    <!-- The parent pom manages the inter-dependencies of the modules. -->
+    <dependencies>
+      <dependency>
+        <groupId>org.jboss.naming</groupId>
+        <artifactId>jnpserver</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-common-core</artifactId>
+        <version>${version.org.jboss.common.core}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging-spi</artifactId>
+        <version>2.0.5.GA</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.microcontainer</groupId>
+        <artifactId>jboss-kernel</artifactId>
+        <version>${version.org.jboss.microcontainer}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.4</version>
+      <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.test</groupId>
+        <artifactId>jboss-test</artifactId>
+        <version>1.1.1.GA</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   
 </project>
 

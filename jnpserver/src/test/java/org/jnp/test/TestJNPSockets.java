@@ -21,12 +21,6 @@
  */
 package org.jnp.test;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.Properties;
 
 import javax.naming.InitialContext;
@@ -37,6 +31,8 @@ import org.jboss.logging.Logger;
 import org.jboss.test.BaseTestCase;
 import org.jnp.server.Main;
 import org.jnp.server.NamingBeanImpl;
+import org.jnp.test.support.ClientSocketFactory;
+import org.jnp.test.support.ServerSocketFactory;
 
 /** A test of RMI custom sockets with the jnp JNDI provider.
 
@@ -102,35 +98,5 @@ public class TestJNPSockets extends BaseTestCase
    {
       Test suite = suite();
       junit.textui.TestRunner.run(suite);
-   }
-
-   public static class ClientSocketFactory implements RMIClientSocketFactory, Serializable
-   {
-      static final long serialVersionUID = -3951228824124738736L;
-
-      static boolean created;
-
-      public Socket createSocket(String host, int port) throws IOException
-      {
-         Socket clientSocket = new Socket(host, port);
-         log.info("createSocket -> " + clientSocket);
-         created = true;
-         return clientSocket;
-      }
-   }
-
-   public static class ServerSocketFactory implements RMIServerSocketFactory, Serializable
-   {
-      static final long serialVersionUID = -2632886892871952872L;
-
-      static boolean created;
-
-      public ServerSocket createServerSocket(int port) throws IOException
-      {
-         ServerSocket serverSocket = new ServerSocket(port);
-         log.info("createServerSocket -> " + serverSocket);
-         created = true;
-         return serverSocket;
-      }
    }
 }

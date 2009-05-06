@@ -173,9 +173,15 @@ public class NamingServerSecurityManagerUnitTest extends BaseTestCase
       tsm.addPermission(new ReflectPermission("suppressAccessChecks"));
       tsm.addPermission(new SerializablePermission("enableSubstitution"));
       System.setSecurityManager(tsm);
-
-      doOps();
-      doBadOps(false);  
+      try
+      {
+         doOps();
+         doBadOps(false);  
+      }
+      finally
+      {
+         System.setSecurityManager(null);
+      }
    }
 
    protected void doOps()
