@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns="urn:jboss:bean-deployer:2.0">
+
+   <!-- Aspect Manager -->
+   <bean name="AspectManager" class="org.jboss.aop.AspectManager">
+      <constructor factoryClass="org.jboss.aop.AspectManager" factoryMethod="instance"/>
+   </bean>
+   
+   <!-- Support for @JNDI -->
+   <lifecycle-preinstall xmlns="urn:jboss:aop-beans:1.0"
+               name="JNDIPreInstallAdvice"
+               class="org.jboss.naming.microcontainer.JNDIOnDemandLifecycleCallback"
+               classes="@org.jboss.naming.microcontainer.JNDI">
+   </lifecycle-preinstall>
+   <lifecycle-install xmlns="urn:jboss:aop-beans:1.0"
+               name="JNDIInstallAdvice"
+               class="org.jboss.naming.microcontainer.JNDIInstallLifecycleCallback"
+               classes="@org.jboss.naming.microcontainer.JNDI">
+   </lifecycle-install>
+
+   <!-- The Naming Server -->
+   <bean name="NamingServer" class="org.jnp.server.NamingBeanImpl"/>
+
+</deployment>

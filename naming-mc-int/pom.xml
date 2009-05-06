@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <!-- Parent -->
+  <parent>
+    <groupId>org.jboss.naming</groupId>
+    <artifactId>jboss-naming-build</artifactId>
+    <version>5.1.0-SNAPSHOT</version>
+  </parent>
+  
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>naming-mc-int</artifactId>
+  <packaging>jar</packaging>
+  <name>JBoss Naming Microcontainer Integration</name>
+  <url>http://www.jboss.org</url>
+  <description>JBoss JNDI Microcontainer Integration</description>
+  <scm>
+     <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
+  </scm>
+  <!-- Properties -->
+  <properties>
+    <version.org.jboss.common.core>2.2.8.GA</version.org.jboss.common.core>
+    <version.org.jboss.microcontainer>2.0.0.CR2</version.org.jboss.microcontainer>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/client.xml</descriptor>
+          </descriptors>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+   
+  <dependencies>
+    <dependency>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.microcontainer</groupId>
+      <artifactId>jboss-kernel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.microcontainer</groupId>
+      <artifactId>jboss-aop-mc-int</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.naming</groupId>
+      <artifactId>jnpserver</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.test</groupId>
+      <artifactId>jboss-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

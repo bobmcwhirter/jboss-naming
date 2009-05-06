@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deployment xmlns="urn:jboss:bean-deployer:2.0">
+
+   <!-- Aspect Manager -->
+   <bean name="Test" class="java.lang.String">
+      <annotation>@org.jboss.naming.microcontainer.JNDI(binding="Test")</annotation>
+      <constructor>
+         <parameter>Hello</parameter>
+      </constructor>
+   </bean>
+
+</deployment>
