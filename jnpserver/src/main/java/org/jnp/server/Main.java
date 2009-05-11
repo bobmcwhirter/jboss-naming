@@ -105,6 +105,8 @@ public class Main implements MainMBean
    protected Logger log;
    /** The thread pool used to handle jnp stub lookup requests */
    private Executor lookupExector;
+   /** The exception seen when creating the lookup listening port */
+   private Exception lookupListenerException;
 
    // Static --------------------------------------------------------
    public static void main(String[] args)
@@ -172,6 +174,15 @@ public class Main implements MainMBean
    public void setLookupExector(Executor lookupExector)
    {
       this.lookupExector = lookupExector;
+   }
+
+   /**
+    * Get any exception seen during the lookup listening port creation
+    * @return
+    */
+   public Exception getLookupListenerException()
+   {
+      return lookupListenerException;
    }
 
    /** Get the call by value flag for jndi lookups.
@@ -488,7 +499,9 @@ public class Main implements MainMBean
       }
       catch (IOException e)
       {
+         lookupListenerException = e;
          log.error("Could not start on port " + port, e);
+         return;
       }
 
    }

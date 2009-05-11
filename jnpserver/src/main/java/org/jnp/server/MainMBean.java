@@ -114,10 +114,21 @@ public interface MainMBean extends NamingBean
    void setJNPServerSocketFactory(String factoryClassName) 
       throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
+   /**
+    * Get the externally define Naming proxy instance
+    * @return
+    * @throws Exception
+    */
    public Object getNamingProxy()
       throws Exception;
    public void setNamingProxy(Object proxy)
       throws IOException;
+
+   /**
+    * Get any exception seen during the lookup listening port creation
+    * @return
+    */
+   public Exception getLookupListenerException();
 
    // Operations ----------------------------------------------------
    

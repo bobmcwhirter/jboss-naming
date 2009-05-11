@@ -40,6 +40,7 @@ import org.jboss.naming.JndiPermission;
 import org.jboss.test.kernel.junit.MicrocontainerTest;
 import org.jnp.interfaces.NamingContext;
 import org.jnp.interfaces.TimedSocketFactory;
+import org.jnp.server.MainMBean;
 import org.jnp.test.support.QueueSecurityManager;
 
 /**
@@ -58,6 +59,7 @@ public class NamingMCUnitTest extends MicrocontainerTest
    private InitialContext ctx;
    private QueueSecurityManager qsm;
    private InitialContextFactory ctxFactory;
+   private MainMBean main;
 
    /**
     * 
@@ -89,6 +91,11 @@ public class NamingMCUnitTest extends MicrocontainerTest
    public void setCtxFactory(InitialContextFactory ctxFactory)
    {
       this.ctxFactory = ctxFactory;
+   }
+   @Inject(bean="jboss:service=Naming", option=InjectOption.OPTIONAL)
+   public void setMainMBean(MainMBean main)
+   {
+      this.main = main;
    }
 
    /**
@@ -140,6 +147,9 @@ public class NamingMCUnitTest extends MicrocontainerTest
    public void testMainBean()
       throws Exception
    {
+      // Validate
+      assertNotNull(main);
+      assertNull("main.getLookupListenerException", main.getLookupListenerException());
       Properties env = new Properties();
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
       env.setProperty("java.naming.provider.url", "localhost:1099");
