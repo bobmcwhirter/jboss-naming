@@ -40,7 +40,9 @@ public abstract class BootstrapNamingTest extends MicrocontainerTest
    
    public static BootstrapNamingTestDelegate getDelegate(Class<?> clazz) throws Exception
    {
-      return new BootstrapNamingTestDelegate(clazz);
+      BootstrapNamingTestDelegate testDelegate = new BootstrapNamingTestDelegate(clazz);
+      testDelegate.setDefaultMode(null); // nullify mode
+      return testDelegate;
    }
    
    public BootstrapNamingTest(String name)
