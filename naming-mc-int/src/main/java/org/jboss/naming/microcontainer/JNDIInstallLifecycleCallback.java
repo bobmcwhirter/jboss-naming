@@ -21,26 +21,19 @@
 */
 package org.jboss.naming.microcontainer;
 
-import org.jboss.dependency.spi.ControllerContext;
 import org.jboss.dependency.spi.ControllerMode;
 
 /**
  * JNDIInstallLifecycleCallback.
  * 
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
+ * @author <a href="ales.justin@jboss.com">Ales Justin</a>
  * @version $Revision: 1.1 $
  */
-public class JNDIInstallLifecycleCallback extends AbstractJNDILifecycleCallback
+public class JNDIInstallLifecycleCallback extends AbstractJNDIModeLifecycleCallback
 {
-   public void install(ControllerContext context) throws Exception
+   protected boolean acceptsMode(ControllerMode mode)
    {
-      if (ControllerMode.ON_DEMAND.equals(context.getMode()) == false)
-         bind(context, null);
-   }
-
-   public void uninstall(ControllerContext context) throws Exception
-   {
-      if (ControllerMode.ON_DEMAND.equals(context.getMode()) == false)
-         unbind(context, null);
+      return ControllerMode.ON_DEMAND.equals(mode) == false;
    }
 }
