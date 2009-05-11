@@ -26,12 +26,14 @@ import junit.framework.TestSuite;
 
 import org.jboss.dependency.spi.ControllerState;
 import org.jboss.kernel.spi.deployment.KernelDeployment;
+import org.jboss.kernel.spi.dependency.KernelControllerContext;
 import org.jboss.test.naming.microcontainer.BootstrapNamingTest;
 
 /**
  * PlainJNDIUnitTestCase.
  * 
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
+ * @author <a href="ales.justin@jboss.com">Ales Justin</a>
  * @version $Revision: 1.1 $
  */
 public class JNDIBindingUnitTestCase extends BootstrapNamingTest
@@ -46,7 +48,7 @@ public class JNDIBindingUnitTestCase extends BootstrapNamingTest
       super(name);
    }
    
-   public void testPlain() throws Exception
+   public void testPlain() throws Throwable
    {
       assertNoBinding("Test");
       KernelDeployment deployment = deploy("Plain.xml");
@@ -62,13 +64,14 @@ public class JNDIBindingUnitTestCase extends BootstrapNamingTest
       }
    }
    
-   public void testOnDemand() throws Exception
+   public void testOnDemand() throws Throwable
    {
       assertNoBinding("Test");
       KernelDeployment deployment = deploy("OnDemand.xml");
       try
       {
-         getControllerContext("Test", ControllerState.PRE_INSTALL);
+         KernelControllerContext context = getControllerContext("Test", ControllerState.NOT_INSTALLED);
+         change(context, ControllerState.DESCRIBED); // FIXME; hack
          assertBinding("Test", "Hello");
          getControllerContext("Test", ControllerState.INSTALLED);
       }

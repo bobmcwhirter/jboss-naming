@@ -8,11 +8,11 @@
    </bean>
    
    <!-- Support for @JNDI -->
-   <lifecycle-preinstall xmlns="urn:jboss:aop-beans:1.0"
+   <lifecycle-describe xmlns="urn:jboss:aop-beans:1.0"
                name="JNDIPreInstallAdvice"
                class="org.jboss.naming.microcontainer.JNDIOnDemandLifecycleCallback"
                classes="@org.jboss.naming.microcontainer.JNDI">
-   </lifecycle-preinstall>
+   </lifecycle-describe>
    <lifecycle-install xmlns="urn:jboss:aop-beans:1.0"
                name="JNDIInstallAdvice"
                class="org.jboss.naming.microcontainer.JNDIInstallLifecycleCallback"
