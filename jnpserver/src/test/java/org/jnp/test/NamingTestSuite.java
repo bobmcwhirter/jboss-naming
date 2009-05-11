@@ -48,6 +48,7 @@ public class NamingTestSuite extends TestSuite
       suite.addTest(NamingServerSecurityManagerUnitTest.suite());
       suite.addTest(TestJNPSockets.suite());
       suite.addTest(NamingContextUnitTest.suite());
+      suite.addTest(BootstrapURLUnitTest.suite());
       
       return suite;
    }

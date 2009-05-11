@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
+import java.util.List;
 
 import javax.net.ServerSocketFactory;
 
@@ -53,6 +54,29 @@ public interface MainMBean extends NamingBean
 
    void setBacklog(int backlog);   
    int getBacklog();
+   
+   /**
+    * Returns a URL suitable for use as a java.naming.provider.url value in
+    * a set of naming environment properties; i.e. one that can be used to 
+    * connect to the lookup socket.
+    * <p>
+    * If there are {@link #getBootstrapURLs() multiple bootstrap URLs}, returns
+    * the first one in the list. TODO: that is is pretty arbitrary
+    * </p>
+    * 
+    * @return the URL, or <code>null</code> if no bound lookup socket exists
+    */
+   String getBootstrapURL();
+   
+   /**
+    * Returns a list of URLs suitable for use as a java.naming.provider.url 
+    * value in a set of naming environment properties; i.e. ones that can be used to 
+    * connect to the lookup socket. There will be one URL per configured
+    * {@link #getBindAddresses() bind address}.
+    * 
+    * @return the URLs, or <code>null</code> if no bound lookup socket exists
+    */
+   List<String> getBootstrapURLs();
 
    public NamingBean getNamingInfo();
    /**

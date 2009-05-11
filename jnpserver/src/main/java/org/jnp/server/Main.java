@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -35,6 +36,7 @@ import java.rmi.Remote;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -98,6 +100,8 @@ public class Main implements MainMBean
    /** The RMI port on which the Naming implementation will be exported. The
     default is 0 which means use any available port. */
    protected int rmiPort = 0;
+   /** URLs that clients can use to connect to the bootstrap socket */
+   protected List<String> bootstrapURLs;
    /** A flag indicating if theServer will be set as the NamingContext.setLocal value */
    protected boolean InstallGlobalService = true;
    /** A flag indicating if theServer will try to use the NamingContext.setLocal value */
@@ -275,6 +279,39 @@ public class Main implements MainMBean
    }
 
    
+   /**
+    * Returns a URL suitable for use as a java.naming.provider.url value in
+    * a set of naming environment properties; i.e. one that can be used to 
+    * connect to the lookup socket.
+    * <p>
+    * If there are {@link #getBootstrapURLs() multiple bootstrap URLs}, returns
+    * the first one in the list. TODO: that is is pretty arbitrary
+    * </p>
+    * 
+    * @return the URL, or <code>null</code> if no bound lookup socket exists
+    */
+   public String getBootstrapURL()
+   {    
+      if (bootstrapURLs != null && bootstrapURLs.size() > 0)
+      {
+         return bootstrapURLs.get(0);
+      }
+      return null;
+   }
+   
+   /**
+    * Returns a list of URLs suitable for use as a java.naming.provider.url 
+    * value in a set of naming environment properties; i.e. ones that can be used to 
+    * connect to the lookup socket. There will be one URL per configured
+    * {@link #getBindAddresses() bind address}.
+    * 
+    * @return the URLs, or <code>null</code> if no bound lookup socket exists
+    */
+   public List<String> getBootstrapURLs()
+   {
+      return bootstrapURLs;
+   }
+   
    public boolean isEnableRmiServerHostname()
    {
       return enableRmiServerHostname;
@@ -430,6 +467,10 @@ public class Main implements MainMBean
       {
          log.error("Exception during shutdown", e);
       }
+      finally
+      {
+         bootstrapURLs = null;
+      }
    }
 
    /** This code should be moved to a seperate invoker in the org.jboss.naming
@@ -471,12 +512,16 @@ public class Main implements MainMBean
             lookupExector = Executors.newFixedThreadPool(count, BootstrapThreadFactory.getInstance());
          }
 
+         bootstrapURLs = new ArrayList<String>(addresses.size());
          for(InetAddress address : addresses)
          {
             serverSocket = jnpServerSocketFactory.createServerSocket(port, backlog, address);
             // If an anonymous port was specified get the actual port used
             if( port == 0 )
                port = serverSocket.getLocalPort();
+            
+            bootstrapURLs.add(createBootstrapURL(serverSocket, port));
+            
             String msg = "JNDI bootstrap JNP=" + address + ":" + port
                + ", RMI=" + address + ":" + rmiPort
                + ", backlog="+backlog;
@@ -572,6 +617,30 @@ public class Main implements MainMBean
          log.error("operation failed", e);
          serverSocketFactory = null;
       }
+   }
+   
+   private static String createBootstrapURL(ServerSocket serverSocket, int port)
+   {   
+      if (serverSocket == null || serverSocket.getInetAddress() == null)
+         return null;
+      
+      // Determine the bootstrap URL
+      StringBuilder sb = new StringBuilder("jnp://");
+      InetAddress addr = serverSocket.getInetAddress();
+      if (addr instanceof Inet6Address)
+      {
+         sb.append('[');
+         sb.append(addr.getHostAddress());
+         sb.append(']');
+      }
+      else
+      {
+         sb.append(addr.getHostAddress());
+      }
+      sb.append(':');
+      sb.append(port);
+      return sb.toString();
+      
    }
 
    private class AcceptHandler implements Runnable
