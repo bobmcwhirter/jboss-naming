@@ -15,11 +15,6 @@
   <scm>
      <connection>scm:svn:https://svn.jboss.org/repos/jbossas/projects/naming/trunk</connection>
   </scm>
-  <!-- Properties -->
-  <properties>
-    <version.org.jboss.common.core>2.2.8.GA</version.org.jboss.common.core>
-    <version.org.jboss.microcontainer>2.0.0.CR2</version.org.jboss.microcontainer>
-  </properties>
 
   <build>
     <plugins>
