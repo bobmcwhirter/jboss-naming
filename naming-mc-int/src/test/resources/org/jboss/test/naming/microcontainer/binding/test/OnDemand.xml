@@ -6,7 +6,7 @@
    <bean name="Test" class="java.lang.String" mode="On Demand">
       <annotation>@org.jboss.naming.microcontainer.JNDI(binding="Test")</annotation>
       <constructor>
-         <parameter>Hello</parameter>
+         <parameter class="java.lang.String">Hello</parameter>
       </constructor>
    </bean>
 
