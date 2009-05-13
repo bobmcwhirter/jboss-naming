@@ -23,10 +23,8 @@ package org.jboss.test.naming.microcontainer.binding.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
 import org.jboss.dependency.spi.ControllerState;
 import org.jboss.kernel.spi.deployment.KernelDeployment;
-import org.jboss.kernel.spi.dependency.KernelControllerContext;
 import org.jboss.test.naming.microcontainer.BootstrapNamingTest;
 
 /**
@@ -70,8 +68,7 @@ public class JNDIBindingUnitTestCase extends BootstrapNamingTest
       KernelDeployment deployment = deploy("OnDemand.xml");
       try
       {
-         KernelControllerContext context = getControllerContext("Test", ControllerState.NOT_INSTALLED);
-         change(context, ControllerState.DESCRIBED); // FIXME; hack
+         getControllerContext("Test", ControllerState.DESCRIBED);
          assertBinding("Test", "Hello");
          getControllerContext("Test", ControllerState.INSTALLED);
       }
