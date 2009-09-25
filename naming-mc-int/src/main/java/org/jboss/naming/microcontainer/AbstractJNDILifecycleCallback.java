@@ -23,6 +23,7 @@ package org.jboss.naming.microcontainer;
 
 import javax.naming.InitialContext;
 
+import org.jboss.annotations.spi.naming.JNDI;
 import org.jboss.beans.info.spi.BeanInfo;
 import org.jboss.beans.metadata.spi.BeanMetaData;
 import org.jboss.dependency.spi.ControllerContext;

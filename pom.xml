@@ -34,7 +34,8 @@
 
   <properties>
     <version.org.jboss.common.core>2.2.13.GA</version.org.jboss.common.core>
-    <version.org.jboss.microcontainer>2.2.0-SNAPSHOT</version.org.jboss.microcontainer>
+    <version.org.jboss.microcontainer>2.0.9.GA</version.org.jboss.microcontainer>
+    <version.org.jboss.integration>6.0.0-SNAPSHOT</version.org.jboss.integration>
   </properties>
 
   <build>
@@ -103,6 +104,11 @@
         <groupId>org.jboss.microcontainer</groupId>
         <artifactId>jboss-aop-mc-int</artifactId>
         <version>${version.org.jboss.microcontainer}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.integration</groupId>
+        <artifactId>jboss-annotations-spi</artifactId>
+        <version>${version.org.jboss.integration}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
