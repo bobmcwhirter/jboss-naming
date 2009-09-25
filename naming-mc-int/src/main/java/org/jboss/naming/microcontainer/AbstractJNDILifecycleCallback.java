@@ -21,6 +21,9 @@
 */
 package org.jboss.naming.microcontainer;
 
+import java.io.Serializable;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.naming.InitialContext;
 
 import org.jboss.annotations.spi.naming.JNDI;
@@ -29,16 +32,29 @@ import org.jboss.beans.metadata.spi.BeanMetaData;
 import org.jboss.dependency.spi.ControllerContext;
 import org.jboss.kernel.spi.dependency.KernelControllerContext;
 import org.jboss.metadata.spi.MetaData;
+import org.jboss.util.naming.NonSerializableFactory;
 import org.jboss.util.naming.Util;
 
 /**
  * AbstractJNDILifecycleCallback.
  * 
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
+ * @author <a href="ales.justin@jboss.com">Ales Justin</a>
  * @version $Revision: 1.1 $
  */
 public abstract class AbstractJNDILifecycleCallback
 {
+   /** Keep track of non serializable entries */
+   private Set<String> nonSerializableEntries = new CopyOnWriteArraySet<String>();
+
+   /**
+    * At stop clear non serializable entries.
+    */
+   public void stop()
+   {
+      nonSerializableEntries.clear();
+   }
+
    /**
     * Installation of the context
     * 
@@ -92,7 +108,17 @@ public abstract class AbstractJNDILifecycleCallback
          Object object = context.getTarget();
          if (object == null)
             throw new IllegalStateException("No object associated with context: " + context.getName());
-         Util.bind(new InitialContext(), jndi.binding(), object);
+
+         if (jndi.serializable() == false || object instanceof Serializable == false)
+         {
+            String binding = jndi.binding();
+            NonSerializableFactory.rebind(new InitialContext(), binding, object);
+            nonSerializableEntries.add(binding);
+         }
+         else
+         {
+            Util.bind(new InitialContext(), jndi.binding(), object);
+         }
       }
       else
       {
@@ -117,7 +143,16 @@ public abstract class AbstractJNDILifecycleCallback
 
       if (jndi.bindDirect())
       {
-         Util.unbind(new InitialContext(), jndi.binding());
+         String binding = jndi.binding();
+         if (nonSerializableEntries.remove(binding))
+         {
+            NonSerializableFactory.unbind(binding);
+            new InitialContext().unbind(binding);
+         }
+         else
+         {
+            Util.unbind(new InitialContext(), binding);
+         }
       }
       else
       {

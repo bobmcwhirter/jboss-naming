@@ -2,7 +2,6 @@
 
 <deployment xmlns="urn:jboss:bean-deployer:2.0">
 
-   <!-- Aspect Manager -->
    <bean name="Test" class="java.lang.String">
      <annotation>@org.jboss.annotations.spi.naming.JNDI(binding="Test")</annotation>
       <constructor>

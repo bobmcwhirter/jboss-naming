@@ -26,6 +26,7 @@ import junit.framework.TestSuite;
 import org.jboss.dependency.spi.ControllerState;
 import org.jboss.kernel.spi.deployment.KernelDeployment;
 import org.jboss.test.naming.microcontainer.BootstrapNamingTest;
+import org.jboss.test.naming.microcontainer.binding.support.NonSerializable;
 
 /**
  * PlainJNDIUnitTestCase.
@@ -71,6 +72,22 @@ public class JNDIBindingUnitTestCase extends BootstrapNamingTest
          getControllerContext("Test", ControllerState.DESCRIBED);
          assertBinding("Test", "Hello");
          getControllerContext("Test", ControllerState.INSTALLED);
+      }
+      finally
+      {
+         undeploy(deployment);
+         assertNoBinding("Test");
+      }
+   }
+
+   public void testNonSerializable() throws Throwable
+   {
+      assertNoBinding("Test");
+      KernelDeployment deployment = deploy("NonSerializable.xml");
+      try
+      {
+         getControllerContext("Test", ControllerState.INSTALLED);
+         assertBinding("Test", new NonSerializable("Hello"));
       }
       finally
       {

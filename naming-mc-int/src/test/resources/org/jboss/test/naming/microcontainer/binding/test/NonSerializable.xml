@@ -2,8 +2,8 @@
 
 <deployment xmlns="urn:jboss:bean-deployer:2.0">
 
-   <bean name="Test" class="java.lang.String" mode="On Demand">
-      <annotation>@org.jboss.annotations.spi.naming.JNDI(binding="Test")</annotation>
+   <bean name="Test" class="org.jboss.test.naming.microcontainer.binding.support.NonSerializable">
+      <annotation>@org.jboss.annotations.spi.naming.JNDI(binding="Test", bindDirect=true)</annotation>
       <constructor>
          <parameter class="java.lang.String">Hello</parameter>
       </constructor>
