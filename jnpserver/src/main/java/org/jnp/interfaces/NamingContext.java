@@ -29,10 +29,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.rmi.ConnectException;
 import java.rmi.MarshalledObject;
 import java.rmi.NoSuchObjectException;
@@ -55,6 +54,7 @@ import javax.naming.CannotProceedException;
 import javax.naming.CommunicationException;
 import javax.naming.ConfigurationException;
 import javax.naming.Context;
+import javax.naming.ContextNotEmptyException;
 import javax.naming.InitialContext;
 import javax.naming.InvalidNameException;
 import javax.naming.LinkRef;
@@ -63,7 +63,6 @@ import javax.naming.NameParser;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.NotContextException;
-import javax.naming.ContextNotEmptyException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.ServiceUnavailableException;
@@ -1294,7 +1293,7 @@ public class NamingContext
    {
       if((naming instanceof NamingEvents) == false)
       {
-         throw new UnsupportedOperationException("Naming implementation does not support NamingExt");
+         throw new UnsupportedOperationException("Naming implementation (" + naming + ") does not implement NamingEvents");
       }
       NamingEvents next = (NamingEvents) naming;
       try
