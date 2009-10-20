@@ -82,6 +82,7 @@ public class NamingServerSecurityManagerUnitTest extends BaseTestCase
    protected void tearDown() throws Exception
    {
       System.setSecurityManager(null);
+      namingBean.stop();
       super.tearDown();
    }
 
