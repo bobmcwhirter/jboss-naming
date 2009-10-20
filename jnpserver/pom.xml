@@ -51,6 +51,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!--testFailureIgnore>true</testFailureIgnore-->
+          <includes>
+            <include>org/jnp/test/**/*UnitTest.class</include>
+          </includes>
           <excludes>
             <exclude>org/jnp/test/support/**</exclude>
           </excludes>
