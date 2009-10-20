@@ -56,6 +56,9 @@ public class NamingBeanImpl
    private EventMgr eventMgr;
    /** The SecurityManager */
    private SecurityManager securityMgr;
+   
+   /** Whether or not to setup java:comp during startup */
+   private boolean installJavaComp = true;
 
    // Static --------------------------------------------------------
    public static void main(String[] args)
@@ -121,6 +124,16 @@ public class NamingBeanImpl
       return new NamingServer(null, null, eventMgr, securityMgr);
    }
 
+   public boolean getInstallJavaComp()
+   {
+      return installJavaComp;
+   }
+   
+   public void setInstallJavaComp(boolean b)
+   {
+      this.installJavaComp = b;
+   }
+   
    /**
     * 
     * @throws Exception
@@ -172,17 +185,20 @@ public class NamingBeanImpl
       if( providerURL != null )
          log.warn("Context.PROVIDER_URL in server jndi.properties, url="+providerURL);
    
-      /* Bind an ObjectFactory to "java:comp" so that "java:comp/env" lookups
-         produce a unique context for each thread contexxt ClassLoader that
-         performs the lookup.
-      */
-      ClassLoader topLoader = Thread.currentThread().getContextClassLoader();
-      ENCFactory.setTopClassLoader(topLoader);
-      RefAddr refAddr = new StringRefAddr("nns", "ENC");
-      Reference envRef = new Reference("javax.namingMain.Context", refAddr, ENCFactory.class.getName(), null);
-      Context ctx = (Context)iniCtx.lookup("java:");
-      ctx.rebind("comp", envRef);
-      ctx.close();
+      if(installJavaComp)
+      {
+         /* Bind an ObjectFactory to "java:comp" so that "java:comp/env" lookups
+            produce a unique context for each thread contexxt ClassLoader that
+            performs the lookup.
+         */
+         ClassLoader topLoader = Thread.currentThread().getContextClassLoader();
+         ENCFactory.setTopClassLoader(topLoader);
+         RefAddr refAddr = new StringRefAddr("nns", "ENC");
+         Reference envRef = new Reference("javax.namingMain.Context", refAddr, ENCFactory.class.getName(), null);
+         Context ctx = (Context)iniCtx.lookup("java:");
+         ctx.rebind("comp", envRef);
+         ctx.close();
+      }
       iniCtx.close();
    }
 
