@@ -63,9 +63,6 @@
         <version>2.4.3</version>
         <configuration>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <includes>
-            <include>org/jboss/test/**/*TestCase.java</include>
-          </includes>
           <systemProperties>
             <property>
               <name>xb.builder.useUnorderedSequence</name>
