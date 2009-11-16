@@ -53,6 +53,7 @@
           <!--testFailureIgnore>true</testFailureIgnore-->
           <excludes>
             <exclude>org/jnp/test/support/**</exclude>
+            <exclude>**/*$*</exclude>
           </excludes>
         </configuration>
       </plugin>   	   

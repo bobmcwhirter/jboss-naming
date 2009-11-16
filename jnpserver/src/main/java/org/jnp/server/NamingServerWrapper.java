@@ -27,8 +27,11 @@ import java.util.Collection;
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.NamingException;
+import javax.naming.event.EventContext;
+import javax.naming.event.NamingListener;
 
 import org.jnp.interfaces.Naming;
+import org.jnp.interfaces.NamingEvents;
 
 /**
  * A delegating wrapper that can be used to create a unique rmi server endpoint
@@ -38,12 +41,16 @@ import org.jnp.interfaces.Naming;
  * @version $Revision:$
  */
 public class NamingServerWrapper
-   implements Naming
+   implements Naming, NamingEvents
 {
    Naming delegate;
+   NamingEvents edelegate;
+
    NamingServerWrapper(Naming delegate)
    {
       this.delegate = delegate;
+      if(delegate instanceof NamingEvents)
+         edelegate = (NamingEvents) delegate;
    }
 
    public void bind(Name name, Object obj, String className)
@@ -80,5 +87,20 @@ public class NamingServerWrapper
       throws NamingException, RemoteException
    {
       delegate.unbind(name);
+   }
+
+   public void addNamingListener(EventContext context, Name target, int scope,
+         NamingListener l) throws NamingException, RemoteException
+   {
+      edelegate.addNamingListener(context, target, scope, l);
+   }
+   public void removeNamingListener(NamingListener l) throws NamingException,
+         RemoteException
+   {
+      edelegate.removeNamingListener(l);
+   }
+   public boolean targetMustExist() throws NamingException, RemoteException
+   {
+      return edelegate.targetMustExist();
    }
 }

@@ -1293,7 +1293,9 @@ public class NamingContext
    {
       if((naming instanceof NamingEvents) == false)
       {
-         throw new UnsupportedOperationException("Naming implementation (" + naming + ") does not implement NamingEvents");
+         Class<?> cls = naming.getClass();
+         String cs = cls.getName() + ", CS:"+ cls.getProtectionDomain().getCodeSource().toString();
+         throw new UnsupportedOperationException("Naming implementation does not support NamingExt, : "+cs);
       }
       NamingEvents next = (NamingEvents) naming;
       try
@@ -1836,34 +1838,93 @@ public class NamingContext
    static private int parseHostPort(String url, Object[] output, int defaultPort)
    {
       // First look for a @ separating the host and port
+
       int colon = url.indexOf('@');
+      String host = null;
+      int port = defaultPort;
+
       if(colon < 0)
       {
-         // If there are multiple ':' assume its an IPv6 address
+         // <IPv4>, <IPv4>:port, [<IPv6>] or [<IPv6>]:port
+         colon = url.indexOf(':');
+         int rightbracket = url.indexOf(']') ;
+         int lastcolon = url.lastIndexOf(':') ;
+
+         if (rightbracket < 0)
+         {
+            // If there are multiple ':' assume its an IPv6 address
+            int firstColon = url.indexOf(':');
+            if(lastcolon > firstColon)
+               colon = lastcolon;
+
+            // assume IPv4 host port combination
+            if (colon < 0)
+            {
+               host = url.trim();
+            }
+            else
+            {
+               host = url.substring(0, colon).trim();
+               try
+               {
+                  port = Integer.parseInt(url.substring(colon + 1).trim());
+               }
+               catch (Exception ex)
+               {
+                  // Use default;
+               }
+            }
+         }
+         else
+         {
+            // assume IPv6 host port combination
+            if (lastcolon < rightbracket)
+            {
+               host = url.substring(1,rightbracket).trim() ;
+            }
+            else
+            {
+               host = url.substring(1,rightbracket).trim() ;
+               try
+               {
+                  port = Integer.parseInt(url.substring(lastcolon + 1).trim());
+               }
+               catch (Exception ex)
+               {
+                  // Use default;
+               }
+            }
+         }
+      }
+      else
+      {
+         // <IPv6>@port, If there are multiple ':' assume its an IPv6 address
          colon = url.lastIndexOf(':');
          int firstColon = url.indexOf(':');
          if(colon > firstColon)
             colon = -1;
+         if(colon < 0)
+         {
+            host = url;
+            port = defaultPort;
+         }
+         else
+         {
+            host = url.substring(0, colon);  
+            try
+            {
+               port = Integer.parseInt(url.substring(colon+1).trim());
+            }
+            catch (Exception ex)
+            {
+               // Use default port
+               port = defaultPort;
+            }
+         }      
       }
 
-      if(colon < 0)
-      {
-         output[HOST_INDEX] = url;
-         output[PORT_INDEX] = new Integer(defaultPort);
-      }
-      else
-      {
-         output[HOST_INDEX] = url.substring(0, colon);  
-         try
-         {
-            output[PORT_INDEX] = Integer.parseInt(url.substring(colon+1).trim());
-         }
-         catch (Exception ex)
-         {
-            // Use default port
-            output[PORT_INDEX] = new Integer(defaultPort);
-         }
-      }
+      output[HOST_INDEX] = host;
+      output[PORT_INDEX] = new Integer(port);
       return colon;
    }
 

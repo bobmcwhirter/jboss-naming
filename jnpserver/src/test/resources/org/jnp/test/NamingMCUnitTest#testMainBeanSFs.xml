@@ -69,7 +69,7 @@
     <bean name="testLocaNamingBeanImpl" class="org.jnp.server.NamingBeanImpl">
         <!-- Install this bean as the global JVM NamingServer -->
         <property name="installGlobalService">true</property>
-        
+        <property name="installJavaComp">false</property>
         <property name="useGlobalService">false</property>
     </bean>
     <bean name="jboss:service=Naming" class="org.jnp.server.Main">

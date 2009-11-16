@@ -66,7 +66,7 @@ public class IPv6UnitTest extends BaseTestCase
          return;
 
       InetAddress localhost = InetAddress.getByName("localhost");
-      InetAddress localhostIPv6 = InetAddress.getByName("::ffff:127.0.0.1");
+      InetAddress localhostIPv6 = InetAddress.getByName("::1");
 
       // Set the java.rmi.server.hostname to the bind address if not set
       if(System.getProperty("java.rmi.server.hostname") == null)
@@ -101,7 +101,7 @@ public class IPv6UnitTest extends BaseTestCase
    {
       Properties env = new Properties();
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-      env.setProperty("java.naming.provider.url", "localhost:"+serverPort);
+      env.setProperty("java.naming.provider.url", "::1:"+serverPort);
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
       Name baseName = null;
       Naming server = null;
@@ -117,10 +117,10 @@ public class IPv6UnitTest extends BaseTestCase
    {
       Properties env = new Properties();
       InetAddress localhost = InetAddress.getByName("localhost");
-      InetAddress localhostIPv6 = InetAddress.getByName("::ffff:"+localhost.getHostAddress());
+      InetAddress localhostIPv6 = InetAddress.getByName("::1");
 
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-      env.setProperty("java.naming.provider.url", localhostIPv6.getHostAddress()+"@"+serverPort);
+      env.setProperty("java.naming.provider.url", "::1:"+serverPort);
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
       Name baseName = null;
       Naming server = null;

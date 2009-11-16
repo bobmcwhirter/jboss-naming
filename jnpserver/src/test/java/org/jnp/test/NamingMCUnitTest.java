@@ -152,7 +152,8 @@ public class NamingMCUnitTest extends MicrocontainerTest
       assertNull("main.getLookupListenerException", main.getLookupListenerException());
       Properties env = new Properties();
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-      env.setProperty("java.naming.provider.url", "localhost:1099");
+      String providerURL = System.getProperty("java.naming.provider.url", "localhost:1099");
+      env.setProperty("java.naming.provider.url", providerURL);
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
       env.setProperty(TimedSocketFactory.JNP_TIMEOUT, "10000");
       env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "10000");
@@ -172,7 +173,8 @@ public class NamingMCUnitTest extends MicrocontainerTest
       getLog().debug("InetAddress.getLocalHost(): "+localAddr);
       Properties env = new Properties();
       env.setProperty("java.naming.factory.initial", "org.jnp.interfaces.NamingContextFactory");
-      env.setProperty("java.naming.provider.url", "localhost:2099");
+      String providerURL = System.getProperty("java.naming.provider.url", "localhost:2099");
+      env.setProperty("java.naming.provider.url", providerURL);
       env.setProperty("java.naming.factory.url", "org.jboss.naming:org.jnp.interfaces");
       env.setProperty(TimedSocketFactory.JNP_TIMEOUT, "1000");
       env.setProperty(TimedSocketFactory.JNP_SO_TIMEOUT, "1000");
