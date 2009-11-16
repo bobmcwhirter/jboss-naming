@@ -24,6 +24,8 @@ package org.jnp.interfaces;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -1765,7 +1767,7 @@ public class NamingContext
                }
             }
 
-            // If there is still no
+            // If there is still no server, try discovery
             Exception discoveryFailure = null;
             if (naming == null)
             {
@@ -1784,8 +1786,14 @@ public class NamingContext
                   StringBuffer buffer = new StringBuffer(50);
                   buffer.append("Could not obtain connection to any of these urls: ").append(urls);
                   if (discoveryFailure != null)
-                     buffer.append(" and discovery failed with error: ").append(discoveryFailure);
+                  {
+                     StringWriter sw = new StringWriter();
+                     PrintWriter pw = new PrintWriter(sw);
+                     discoveryFailure.printStackTrace(pw);
+                     buffer.append(" and discovery failed with error: ").append(sw.toString());
+                  }
                   CommunicationException ce = new CommunicationException(buffer.toString());
+                  
                   ce.setRootCause(serverEx);
                   throw ce;
                }
