@@ -75,6 +75,7 @@ import javax.naming.spi.ResolveResult;
 import javax.net.SocketFactory;
 
 import org.jboss.logging.Logger;
+import org.jnp.MissingObjectFactoryException;
 
 /**
  * This class provides the jnp provider Context implementation. It is a Context
@@ -1503,7 +1504,13 @@ public class NamingContext
    {
       if (useAbsoluteName(env))
          name = getAbsoluteName(name);
-      return NamingManager.getObjectInstance(obj, name, this, env);
+      final Object obtained = NamingManager.getObjectInstance(obj, name, this, env);
+      if(obtained instanceof Reference)
+      {
+         final Reference ref = (Reference) obtained;
+         throw MissingObjectFactoryException.create(ref.getFactoryClassName(), name);
+      }
+      return obtained;
    }
 
    /**
