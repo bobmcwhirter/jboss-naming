@@ -1651,6 +1651,11 @@ public class NamingContext
          {
             InetSocketAddress localAddr = new InetSocketAddress(localAddrStr, localPort);
             s = new MulticastSocket(localAddr);
+            InetAddress sendAddress = localAddr.getAddress();
+            if (sendAddress.isAnyLocalAddress() == false)
+            {
+               s.setInterface(sendAddress);
+            }
          }
          else
          {
@@ -1660,7 +1665,10 @@ public class NamingContext
          s.setTimeToLive(ttl);
          if(log.isTraceEnabled())
             log.trace("TTL on multicast discovery socket is " + ttl);
-         s.joinGroup(iaGroup);
+         // JBNAME-47 There is no need to join the group to send to it.
+         // Joining just raises the (slight) possibility of incorrectly receiving
+         // someone else's multicast discovery message instead of unicast reply
+//         s.joinGroup(iaGroup);
          if (trace)
             log.trace("MulticastSocket: " + s);
          DatagramPacket packet;
