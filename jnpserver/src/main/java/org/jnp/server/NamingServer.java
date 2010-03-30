@@ -21,12 +21,13 @@
   */
 package org.jnp.server;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.jboss.logging.Logger;
+import org.jboss.naming.JndiPermission;
+import org.jnp.interfaces.Naming;
+import org.jnp.interfaces.NamingContext;
+import org.jnp.interfaces.NamingEvents;
+import org.jnp.interfaces.NamingParser;
+
 import javax.naming.Binding;
 import javax.naming.CannotProceedException;
 import javax.naming.Context;
@@ -42,13 +43,12 @@ import javax.naming.event.EventContext;
 import javax.naming.event.NamingEvent;
 import javax.naming.event.NamingListener;
 import javax.naming.spi.ResolveResult;
-
-import org.jboss.logging.Logger;
-import org.jboss.naming.JndiPermission;
-import org.jnp.interfaces.Naming;
-import org.jnp.interfaces.NamingContext;
-import org.jnp.interfaces.NamingEvents;
-import org.jnp.interfaces.NamingParser;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The in memory JNDI naming server implementation class.
@@ -768,7 +768,7 @@ public class NamingServer
             }
             log.trace(tmp.toString());
          }
-         throw new NameNotFoundException(key + " not bound");
+         throw new NameNotFoundException(key + " not bound in " + prefix);
       }
       return b;
    }
