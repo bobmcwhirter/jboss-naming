@@ -163,12 +163,28 @@ public class NamingContext
    public static final String JNP_NAMING_INSTANCE_NAME = "jnp.namingInstanceName";
 
    /**
-    * Global JNP disable discovery system property: -Djboss.global.jnp.disableDiscover=[true|false]
+    * Whether or not the order of the provider list is significant.  Default behavior
+    * assumes that it is which can lead to bad behavior if one of the initial URLs is
+    * not contactable.
+    */ 
+   public static final String JNP_UNORDERED_PROVIDER_LIST = "jnp.unorderedProviderList";
+
+   /**
+    * Global JNP disable discovery system property: -Djboss.global.jnp.disableDiscovery=[true|false]
     * At the VM level, this property controls how disable discovery behaves in 
     * absence of per context jnp.disableDiscovery property.  
     */
    private static final boolean GLOBAL_JNP_DISABLE_DISCOVERY = Boolean.valueOf(getSystemProperty("jboss.global.jnp.disableDiscovery", "false"));
    
+   /**
+    * Global JNP unordered provider list system property:
+    *    -Djboss.global.jnp.unorderedProviderList=[true|false]
+    * At the VM level, this property controls how unordered provider list behaves
+    * in absence of per context jnp.unorderedProviderList.  Default is false.
+    */
+   private static final String GLOBAL_UNORDERED_PROVIDER_LIST =
+        System.getProperty("jboss.global.jnp.unorderedProviderList", "false");
+
    public static String getSystemProperty(final String name, final String defaultValue)
    {
       String prop;
@@ -292,6 +308,12 @@ public class NamingContext
    static Naming getServer(String host, int port, Hashtable serverEnv)
       throws NamingException
    {
+      return getServer(host, port, serverEnv, false);
+   }
+
+   static Naming getServer(String host, int port, Hashtable serverEnv, boolean cachedOnly)
+      throws NamingException
+   {
       // Check the server cache for a host:port entry
       InetSocketAddress key = new InetSocketAddress(host, port);
       WeakReference<Naming> ref = cachedServers.get(key);
@@ -307,6 +329,9 @@ public class NamingContext
             return server;
          }
       }
+
+      if ( cachedOnly )
+         return null;
 
       // Server not found; add it to cache
       try
@@ -1757,28 +1782,69 @@ public class NamingContext
          {
             StringTokenizer tokenizer = new StringTokenizer(urls, ",");
 
-            while (naming == null && tokenizer.hasMoreElements())
+            // If provider list is unordered, first check for a cached connection to any provider
+            String unorderedProviderList = (String) refEnv.get(JNP_UNORDERED_PROVIDER_LIST);
+
+            // If unset, set to global which defaults to false.
+            if (unorderedProviderList == null)
+	    {
+	        unorderedProviderList = GLOBAL_UNORDERED_PROVIDER_LIST;
+            }
+
+            if ( Boolean.valueOf(unorderedProviderList) == Boolean.TRUE )
             {
-               String url = tokenizer.nextToken();
-               // Parse the url into a host:port form, stripping any protocol
-               Name urlAsName = getNameParser("").parse(url);
-               String server = parseNameForScheme(urlAsName, null);
-               if (server != null)
-                  url = server;
-               // 
-               Object[] hostAndPort = {url, 0};
-               parseHostPort(url, hostAndPort, 1099);
-               host = (String) hostAndPort[HOST_INDEX];
-               port = (Integer) hostAndPort[PORT_INDEX];
-               try
+               while (naming == null && tokenizer.hasMoreElements())
                {
-                  // Get server from cache
-                  naming = getServer(host, port, refEnv);
+                  String url = tokenizer.nextToken();
+                  // Parse the url into a host:port form, stripping any protocol
+                  Name urlAsName = getNameParser("").parse(url);
+                  String server = parseNameForScheme(urlAsName, null);
+                  if (server != null)
+                     url = server;
+                  // 
+                  Object[] hostAndPort = {url, 0};
+                  parseHostPort(url, hostAndPort, 1099);
+                  host = (String) hostAndPort[HOST_INDEX];
+                  port = (Integer) hostAndPort[PORT_INDEX];
+                  try
+                  {
+                     // Get server from cache
+                     naming = getServer(host, port, refEnv, true);
+                  }
+                  catch (Exception e)
+                  {
+                     serverEx = e;
+                     log.trace("Error retrieving cached connection to " + host + ":" + port, e);
+                  }
                }
-               catch (Exception e)
+               tokenizer = new StringTokenizer(urls, ",");
+            }
+
+            if (naming == null)
+            {
+               while (naming == null && tokenizer.hasMoreElements())
                {
-                  serverEx = e;
-                  log.debug("Failed to connect to " + host + ":" + port, e);
+                  String url = tokenizer.nextToken();
+                  // Parse the url into a host:port form, stripping any protocol
+                  Name urlAsName = getNameParser("").parse(url);
+                  String server = parseNameForScheme(urlAsName, null);
+                  if (server != null)
+                     url = server;
+                  // 
+                  Object[] hostAndPort = {url, 0};
+                  parseHostPort(url, hostAndPort, 1099);
+                  host = (String) hostAndPort[HOST_INDEX];
+                  port = (Integer) hostAndPort[PORT_INDEX];
+                  try
+                  {
+                     // Get server from cache
+                     naming = getServer(host, port, refEnv);
+                  }
+                  catch (Exception e)
+                  {
+                     serverEx = e;
+                     log.debug("Failed to connect to " + host + ":" + port, e);
+                  }
                }
             }
 
